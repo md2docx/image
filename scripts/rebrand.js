@@ -119,7 +119,7 @@ const rebrandFn = async () => {
     );
 
     execSync(
-      `sed -i -e 's/const packageName = repo/const packageName = config.packageName/' scripts/rebrand.js`,
+      `sed -i -e 's/const packageName = config.packageName/const packageName = config.packageName/' scripts/rebrand.js`,
       { stdio: "inherit" },
     );
   }

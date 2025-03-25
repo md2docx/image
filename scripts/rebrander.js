@@ -177,6 +177,6 @@ execSync("pnpm i", { stdio: "inherit" });
 console.log("\x1b[32m", "cleaning up the lib/src and committing to repo...");
 // clean lib/src and create commit
 execSync(
-  'rm -rf ./lib/src/ && mv lib/src_template lib/src && git add . && git commit -m "Rebrand 💖 <a href="https://mayank-chaudhari.vercel.app" target="_blank">Mayank Kumar Chaudhari</a> [skip ci]" && turbo telemetry disable',
+  'git add . && git commit -m "Rebrand 💖 <a href="https://mayank-chaudhari.vercel.app" target="_blank">Mayank Kumar Chaudhari</a> [skip ci]" && turbo telemetry disable',
   { stdio: "inherit" },
 );
