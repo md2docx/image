@@ -1,147 +1,71 @@
-# `@m2d/image` <img src="https://raw.githubusercontent.com/mayank1513/mayank1513/main/popper.png" height="40"/>
+# @m2d/image
 
-[![test](https://github.com/md2docx/image/actions/workflows/test.yml/badge.svg)](https://github.com/md2docx/image/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/md2docx/image/graph/badge.svg)](https://codecov.io/gh/md2docx/image) [![Version](https://img.shields.io/npm/v/@m2d/image?color=green)](https://www.npmjs.com/package/@m2d/image) ![Downloads](https://img.shields.io/npm/d18m/@m2d/image) ![Bundle Size](https://img.shields.io/bundlephobia/minzip/@m2d/image)
+[![test](https://github.com/md2docx/image/actions/workflows/test.yml/badge.svg)](https://github.com/md2docx/image/actions/workflows/test.yml) [![Maintainability](https://api.codeclimate.com/v1/badges/aa896ec14c570f3bb274/maintainability)](https://codeclimate.com/github/md2docx/image/maintainability) [![codecov](https://codecov.io/gh/md2docx/image/graph/badge.svg)](https://codecov.io/gh/md2docx/image) [![Version](https://img.shields.io/npm/v/@m2d/image.svg?colorB=green)](https://www.npmjs.com/package/@m2d/image) [![Downloads](https://img.jsdelivr.com/img.shields.io/npm/d18m/@m2d/image.svg)](https://www.npmjs.com/package/@m2d/image) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/@m2d/image)
 
-> Converts Markdown (`![alt](url)`) and HTML `<img>` nodes into **DOCX-compatible** `ImageRun` elements.
+> Emoji shortcode support for `mdast2docx`
 
-> Using `<img>` tag requires `@m2d/html` plugin.
+This plugin adds support for emoji shortcodes (e.g., `:smile:`, `:rocket:`) in your Markdown-to-DOCX conversion pipeline. It replaces recognized emoji shortcodes with their corresponding Unicode characters during the MDAST transformation.
+
+---
+
+## ✨ Features
+
+- Converts emoji shortcodes to Unicode emojis (e.g., `:tada:` → 🎉)
+- Compatible with [`@m2d/core`](https://www.npmjs.com/package/@m2d/core)
+- Works seamlessly within the `mdast2docx` plugin ecosystem
+- Easy to integrate and lightweight
 
 ---
 
 ## 📦 Installation
 
 ```bash
-npm install @m2d/image
+pnpm install @m2d/image
 ```
 
-```bash
-pnpm add @m2d/image
-```
+**_or_**
 
 ```bash
 yarn add @m2d/image
 ```
 
----
+**_or_**
 
-## 🚀 Overview
-
-The `@m2d/image` plugin for [`mdast2docx`](https://github.com/mayankchaudhari/mdast2docx) enables inline image rendering in DOCX files.
-
-It supports:
-
-- Base64 and external URLs
-- Common image formats like `jpg`, `png`, `gif`, `bmp`
-- Fallbacks and transformations
-- SVG fallback support via auto-rendering
-
----
-
-## 🛠️ Usage
-
-```ts
-import { imagePlugin } from "@m2d/image";
-
-const plugins = [
-  htmlPlugin(),
-  imagePlugin(), // ✅ Place after htmlPlugin
-  tablePlugin(),
-];
-```
-
-> 🧠 If you're using `@m2d/html`, ensure it comes **before** this plugin so HTML-based `<img>` tags are parsed correctly.
-
----
-
-## 🧪 Production Ready
-
-This plugin is **production-ready** and powers inline image rendering for `mdast2docx`.  
-It has built-in fallbacks and intelligent resolution for base64 and external images.
-
-> 💬 **Contributions and ideas are welcome!**  
-> Feel free to open an issue or PR.
-
----
-
-## 🖼️ Supported Image Types
-
-- `jpeg`
-- `jpg`
-- `png`
-- `bmp`
-- `gif`
-
-> SVG is supported with fallback rendering into PNG.
-
----
-
-## ⚙️ Plugin Options
-
-```ts
-interface IImagePluginOptions {
-  scale?: number; // default: 3 — scales image resolution when using base64
-  fallbackImageType?: "png" | "jpg" | "bmp" | "gif";
-  imageResolver?: (src: string, options?: IImagePluginOptions) => Promise<IImageOptions>;
-}
-```
-
-### Custom Image Resolver
-
-Use this to override how images are loaded and transformed:
-
-```ts
-const customResolver: ImageResolver = async (src, options) => {
-  const response = await fetch(src);
-  const arrayBuffer = await response.arrayBuffer();
-  return {
-    type: "png",
-    data: arrayBuffer,
-    transformation: {
-      width: 400,
-      height: 300,
-    },
-  };
-};
-
-imagePlugin({ imageResolver: customResolver });
+```bash
+npm add @m2d/image
 ```
 
 ---
 
 ## 🧠 How It Works
 
-1. Checks if the image is a base64 or remote URL.
-2. Parses image format, dimensions, and scale.
-3. Wraps the image as a `docx.ImageRun` with metadata (like alt text).
-4. Provides fallbacks if image type is unsupported or fails.
+This plugin scans all text nodes for emoji shortcodes (e.g., `:fire:`, `:sparkles:`) and replaces them with matching Unicode emojis using a predefined emoji JSON mapping.
 
 ---
 
-## 💡 Features
+## 🔍 Emoji Support
 
-- **Inline Markdown images**: `![alt](url)`
-- **HTML `<img>` tags**: when combined with `@m2d/html`
-- **Auto-scaled rendering** using canvas
-- **SVG support with fallback** to PNG via `canvas`
+It uses the [GitHub-style emoji shortcodes](https://github.com/ikatyang/emoji-cheat-sheet) and more — if a shortcode is not recognized, it will remain unchanged.
 
 ---
 
-## ⚠️ Limitations
+## 🛠️ Development
 
-- Requires client-side (DOM) environment (uses `<canvas>`, `<img>`, etc.)
-- Not compatible with server-side rendering (SSR) _Node.js image plugin coming soon!_
-- External images must be accessible (CORS-safe URLs)
+```bash
+# Clone and install dependencies
+git clone https://github.com/md2docx/emoji-plugin
+cd emoji-plugin
+npm install
+
+# Build / Test / Dev
+npm run build
+```
 
 ---
 
-## 🔌 Related Plugins/Packages
+## 📄 License
 
-| Plugin                                               | Purpose                                |
-| ---------------------------------------------------- | -------------------------------------- |
-| [`@m2d/core`](https://npmjs.com/package/@m2d/core)   | Converts extended MDAST to DOCX        |
-| [`@m2d/html`](https://npmjs.com/package/@m2d/html)   | Parses raw HTML to extended MDAST      |
-| [`@m2d/table`](https://npmjs.com/package/@m2d/table) | Renders table nodes to DOCX            |
-| [`@m2d/list`](https://npmjs.com/package/@m2d/list)   | Enhanced list support (tasks, bullets) |
+Licensed under the **MPL-2.0** License.
 
 ---
 
@@ -149,14 +73,8 @@ imagePlugin({ imageResolver: customResolver });
 
 If you find this useful:
 
-- ⭐ Star [mdast2docx](https://github.com/tiny-md/mdast2docx) on GitHub
+- ⭐ Star [mdast2docx](https://github.com/md2docx/mdast2docx) on GitHub
 - ❤️ Consider [sponsoring](https://github.com/sponsors/mayank1513)
-
----
-
-## 🧾 License
-
-MIT © [Mayank Chaudhari](https://github.com/mayankchaudhari)
 
 ---
 
