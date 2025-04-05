@@ -96,6 +96,7 @@ const handleDataUrls = async (
   const imgType = src.split(";")[0].split("/")[1];
 
   // skipcq: JS-0323
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (SUPPORTED_IMAGE_TYPES.includes(imgType as any)) {
     return {
       data: src,
@@ -110,7 +111,7 @@ const handleDataUrls = async (
 
   const fallbackImageType = options?.fallbackImageType ?? "png";
 
-  const imgData: IImageOptions = {
+  return {
     data: canvas.toDataURL(`image/${fallbackImageType}`),
     type: fallbackImageType,
     transformation: {
@@ -118,18 +119,6 @@ const handleDataUrls = async (
       height: height / scaleFactor,
     },
   };
-
-  return src.includes("svg")
-    ? {
-        ...imgData,
-        type: "svg",
-        data: src,
-        fallback: {
-          type: fallbackImageType,
-          data: imgData.data,
-        },
-      }
-    : imgData;
   /* v8 ignore stop */
 };
 
