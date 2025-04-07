@@ -1,5 +1,5 @@
 import type { IImageOptions } from "docx";
-import { IPlugin } from "@m2d/core";
+import { IPlugin, Optional } from "@m2d/core";
 
 /**
  * List of image types fully supported by docx. SVG requires fallback thus we do not include that here.
@@ -9,28 +9,36 @@ export const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as con
 /**
  * Resolves an image source URL into the appropriate image options for DOCX conversion.
  */
-export type ImageResolver = (src: string, options?: IImagePluginOptions) => Promise<IImageOptions>;
+export type ImageResolver = (
+  src: string,
+  options: IDefaultImagePluginOptions,
+) => Promise<IImageOptions>;
 
 /**
  * Options for the image plugin.
  */
-export interface IImagePluginOptions {
+export interface IDefaultImagePluginOptions {
   /**
    * Scaling factor for base64-encoded images.
    * @default 3
    */
-  scale?: number;
+  scale: number;
   /**
    * Fallback image type if the image type cannot be determined or is not supported.
    * @default "png"
    */
-  fallbackImageType?: "png" | "jpg" | "bmp" | "gif";
+  fallbackImageType: "png" | "jpg" | "bmp" | "gif";
 
   /**
    * Custom image resolver to resolve an image source URL into the appropriate image options for DOCX conversion.
    */
-  imageResolver?: ImageResolver;
+  imageResolver: ImageResolver;
+
+  maxW: number /** inch */;
+  maxH: number /** inch */;
 }
+
+type IImagePluginOptions = Optional<IDefaultImagePluginOptions>;
 
 /**
  * Determines the MIME type of an image based on its binary signature.
@@ -62,8 +70,17 @@ export const getImageMimeType = (buffer: Buffer | ArrayBuffer) => {
   }
 };
 
-/** Default scale factor for base64-encoded images */
-const DEFAULT_SCALE_FACTOR = 3;
+const handleSvg = async (svg: string, options?: IImagePluginOptions): Promise<IImageOptions> => {
+  return {
+    data: "src",
+    // @ts-expect-error -- ok as one of SUPPORTED_TYPES
+    type: imgType,
+    transformation: {
+      width: 1,
+      height: 1,
+    },
+  };
+};
 
 /**
  * Processes base64-encoded images, extracts dimensions, and returns image options.
@@ -74,14 +91,10 @@ const DEFAULT_SCALE_FACTOR = 3;
  */
 const handleDataUrls = async (
   src: string,
-  options?: IImagePluginOptions,
+  options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
-  const scaleFactor = options?.scale ?? DEFAULT_SCALE_FACTOR;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  /* v8 ignore start - canvas is not available in JSDOM */
-  if (!ctx) throw new Error("Canvas context not available");
+  const scaleFactor = options.scale;
+  const imgType = src.split(";")[0].split("/")[1];
 
   const img = new Image();
   img.src = src;
@@ -89,11 +102,6 @@ const handleDataUrls = async (
 
   const width = img.width * scaleFactor;
   const height = img.height * scaleFactor;
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(img, 0, 0, width, height);
-
-  const imgType = src.split(";")[0].split("/")[1];
 
   // skipcq: JS-0323
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,6 +117,15 @@ const handleDataUrls = async (
     };
   }
 
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  /* v8 ignore start - canvas is not available in JSDOM */
+  if (!ctx) throw new Error("Canvas context not available");
+
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(img, 0, 0, width, height);
   const fallbackImageType = options?.fallbackImageType ?? "png";
 
   return {
@@ -130,7 +147,7 @@ const handleDataUrls = async (
  */
 const handleNonDataUrls = async (
   url: string,
-  options?: IImagePluginOptions,
+  options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
   const response = await fetch(
     url.startsWith("http") ? url : `${window.location.origin}/${url.replace(/^\/+/, "")}`,
@@ -138,7 +155,7 @@ const handleNonDataUrls = async (
 
   if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
     const svgText = await response.text();
-    return handleDataUrls(`data:image/svg+xml;base64,${btoa(svgText)}`, options);
+    return handleSvg(svgText, options);
   }
   const arrayBuffer = await response.arrayBuffer();
   const mimeType = getImageMimeType(arrayBuffer) || "png";
@@ -167,7 +184,7 @@ const handleNonDataUrls = async (
  * @param options - Plugin options including scaling factor.
  * @returns The resolved image options.
  */
-const imageResolver: ImageResolver = async (src: string, options?: IImagePluginOptions) => {
+const imageResolver: ImageResolver = async (src: string, options: IDefaultImagePluginOptions) => {
   try {
     return src.startsWith("data:")
       ? await handleDataUrls(src, options)
@@ -185,26 +202,38 @@ const imageResolver: ImageResolver = async (src: string, options?: IImagePluginO
   }
 };
 
+const defaultOptions: IDefaultImagePluginOptions = {
+  scale: 3,
+  fallbackImageType: "png",
+  imageResolver,
+  // Assuming A4, portrait, and normal page margins
+  maxW: 6.3,
+  maxH: 9.7,
+};
+
 /**
  * Image plugin for processing inline image nodes in Markdown AST.
  * This plugin is designed for client-side (web) environments.
  */
-export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options => ({
-  inline: async (docx, node, _, definitions) => {
-    if (/^image/.test(node.type)) {
-      // Extract image URL from the node or definitions
-      // @ts-expect-error - node might not have a URL or identifier, but those cases are handled
-      const url = node.url ?? definitions[node.identifier?.toUpperCase()];
-      // @ts-expect-error - node might not have alt text
-      const alt = node.alt ?? url?.split("/").pop();
-      node.type = "";
-      return [
-        new docx.ImageRun({
-          ...(await (options?.imageResolver ?? imageResolver)(url, options)),
-          altText: { description: alt, name: alt, title: alt },
-        }),
-      ];
-    }
-    return [];
-  },
-});
+export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
+  const options: IDefaultImagePluginOptions = { ...defaultOptions, ...options_ };
+  return {
+    inline: async (docx, node, _, definitions) => {
+      if (/^image/.test(node.type)) {
+        // Extract image URL from the node or definitions
+        // @ts-expect-error - node might not have a URL or identifier, but those cases are handled
+        const url = node.url ?? definitions[node.identifier?.toUpperCase()];
+        // @ts-expect-error - node might not have alt text
+        const alt = node.alt ?? url?.split("/").pop();
+        node.type = "";
+        return [
+          new docx.ImageRun({
+            ...(await options.imageResolver(url, options)),
+            altText: { description: alt, name: alt, title: alt },
+          }),
+        ];
+      }
+      return [];
+    },
+  };
+};
