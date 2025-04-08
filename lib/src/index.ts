@@ -1,5 +1,13 @@
 import type { IImageOptions } from "docx";
-import type { Image, ImageReference, IPlugin, Optional, PhrasingContent } from "@m2d/core";
+import type {
+  Image,
+  ImageReference,
+  IPlugin,
+  Mutable,
+  Optional,
+  PhrasingContent,
+  SVG,
+} from "@m2d/core";
 import { handleSvg } from "./svg-utils";
 
 /**
@@ -246,25 +254,43 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
   const options: IDefaultImagePluginOptions = { ...defaultOptions, ...options_ };
   return {
     inline: async (docx, node, runProps, definitions) => {
-      if (/^image/.test(node.type)) {
-        (node as Image).url =
+      if (/^(image|svg)/.test(node.type)) {
+        const alt = (node as Image).alt ?? (node as Image).url?.split("/")?.pop() ?? "";
+        const url =
           (node as Image).url ?? definitions[(node as ImageReference).identifier?.toUpperCase()];
-        // @ts-expect-error - node might not have alt text
-        const alt = node.alt ?? url?.split("/").pop();
+
+        const imgOptions =
+          node.type === "svg"
+            ? await handleSvg(node.value, options)
+            : await options.imageResolver(url, options);
+
+        // apply data props
+        const { data } = node as Image;
+        const { width: origW, height: origH } = imgOptions.transformation;
+        let { width, height } = data ?? {};
+        if (width && !height) {
+          height = (origH * width) / origW;
+        } else if (!width && height) {
+          width = (origW * height) / origH;
+        } else if (!width && !height) {
+          height = origH;
+          width = origW;
+        }
+
+        const scale = Math.min(
+          (options.maxW * options.dpi) / width!,
+          (options.maxH * options.dpi) / height!,
+          1,
+        );
+        // @ts-expect-error -- we are mutating the immutable options.
+        imgOptions.transformation = { width: width * scale, height: height * scale };
         node.type = "";
         return [
           new docx.ImageRun({
-            ...(await options.imageResolver((node as Image).url, options)),
+            ...imgOptions,
             altText: { description: alt, name: alt, title: alt },
             ...runProps,
-          }),
-        ];
-      } else if (node.type === "svg") {
-        (node as PhrasingContent).type = "";
-        return [
-          new docx.ImageRun({
-            ...(await handleSvg(node.value, options)),
-            ...runProps,
+            ...(node as Image | SVG).data,
           }),
         ];
       }
