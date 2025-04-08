@@ -26,8 +26,11 @@ const tightlyCropSvg = async (
   container: HTMLDivElement,
 ): Promise<{ svg: string; scale: number }> => {
   return new Promise((resolve, reject) => {
-    container.innerHTML = svgRaw;
-    const svgEl = container.querySelector("svg");
+    const svgContainer = document.createElement("div");
+    svgContainer.innerHTML = svgRaw;
+    svgContainer.style = "width:100%;height:100%;position:absolute;";
+    container.appendChild(svgContainer);
+    const svgEl = svgContainer.querySelector("svg");
 
     if (!svgEl) return reject(new Error("No <svg> found"));
 
@@ -53,10 +56,10 @@ const tightlyCropSvg = async (
         clonedSvg.removeAttribute("style");
 
         const svg = new XMLSerializer().serializeToString(clonedSvg);
-        svgEl.remove();
+        svgContainer.remove();
         resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH, 1) });
       } catch (err) {
-        svgEl.remove();
+        svgContainer.remove();
         reject(err);
       }
     });
