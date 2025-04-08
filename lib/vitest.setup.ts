@@ -17,21 +17,42 @@ SVGElement.prototype.getBBox = () => ({
   height: 100,
 });
 
-const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-  const dummyText = "<svg></svg>";
-  const dummyArrayBuffer = new TextEncoder().encode(dummyText).buffer;
+const mockFetch = vi.fn(async (url: string) => {
+  if (url.endsWith(".svg")) {
+    const svgText = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+        <circle cx="50" cy="50" r="40" stroke="green" fill="yellow" />
+      </svg>
+    `.trim();
 
+    return {
+      ok: true,
+      status: 200,
+      headers: {
+        get: (header: string) => {
+          if (header.toLowerCase() === "content-type") return "image/svg+xml";
+          return null;
+        },
+      },
+      text: async () => svgText,
+      arrayBuffer: async () => new TextEncoder().encode(svgText).buffer,
+    };
+  }
+
+  // For PNG or other image mocks
+  const fakePng = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG file signature
   return {
     ok: true,
     status: 200,
-    headers: new Headers({ "Content-Type": "image/svg+xml" }),
-
-    // 👇 All the response methods you're using
-    text: async () => dummyText,
-    arrayBuffer: async () => dummyArrayBuffer,
-    blob: async () => new Blob([dummyArrayBuffer], { type: "image/svg+xml" }),
-  } as unknown as Response;
-});
+    headers: {
+      get: (header: string) => {
+        if (header.toLowerCase() === "content-type") return "image/png";
+        return null;
+      },
+    },
+    arrayBuffer: async () => fakePng.buffer,
+  };
+}) as any;
 
 vi.stubGlobal("fetch", mockFetch);
 
