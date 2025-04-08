@@ -5,6 +5,8 @@ import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import fs from "fs";
 import { imagePlugin } from "../src";
+import { htmlPlugin } from "@m2d/html";
+import { mermaidPlugin } from "@m2d/mermaid";
 
 const markdown = fs.readFileSync("../sample.md", "utf-8");
 
@@ -12,7 +14,11 @@ describe.concurrent("toDocx", () => {
   const mdast = unified().use(remarkParse).use(remarkGfm).parse(markdown);
 
   it("should handle images", async ({ expect }) => {
-    const docxBlob = await toDocx(mdast, {}, { plugins: [imagePlugin()] });
+    const docxBlob = await toDocx(
+      mdast,
+      {},
+      { plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin()] },
+    );
     expect(docxBlob).toBeInstanceOf(Blob);
   });
 

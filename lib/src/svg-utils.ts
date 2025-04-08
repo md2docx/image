@@ -128,7 +128,7 @@ export const handleSvg = async (
       },
     };
   } catch (error) {
-    console.error("Error resolving SVG image: ", svg, error);
+    console.error("Error resolving SVG image: ", error);
     return {
       type: "png",
       data: Buffer.from([]),
