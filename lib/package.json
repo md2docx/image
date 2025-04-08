@@ -52,7 +52,8 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
-    "@m2d/core": "^0.0.4"
+    "@m2d/core": "^0.0.4",
+    "@m2d/mermaid": "^0.0.2"
   },
   "peerDependencies": {
     "docx": "^9.3.0"

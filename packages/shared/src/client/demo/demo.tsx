@@ -9,9 +9,10 @@ import { removePosition } from "unist-util-remove-position";
 // skipcq: JS-R1001
 import demoCode from "./demo.tsx?raw";
 import { useState } from "react";
-import { toDocx } from "mdast2docx";
+import { toDocx } from "@m2d/core";
 import { imagePlugin } from "@m2d/image";
-import { htmlPlugin } from "mdast2docx/plugins";
+import { htmlPlugin } from "@m2d/html";
+import { mermaidPlugin } from "@m2d/mermaid";
 
 /** React live demo */
 export function Demo() {
@@ -22,6 +23,7 @@ export function Demo() {
 
   removePosition(mdast);
 
+  /** Create and download docx */
   const downloadDocx = () => {
     setLoading(true);
 
@@ -29,7 +31,7 @@ export function Demo() {
       mdast,
       {},
       {
-        plugins: [htmlPlugin(), imagePlugin()],
+        plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin()],
       },
     ).then(blob => {
       const url = URL.createObjectURL(blob as Blob);
