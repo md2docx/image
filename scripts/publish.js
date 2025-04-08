@@ -43,9 +43,17 @@ if (isPatch) {
     );
   } catch {}
 } else {
-  require("./update-security-md")(`${newMajor}.${newMinor}`, `${oldMajor}.${oldMinor}`);
-  /** Create new release branch for every Major or Minor release */
-  execSync(`git checkout -b ${releaseBranch} && git push origin ${releaseBranch}`);
+  try {
+    require("./update-security-md")(`${newMajor}.${newMinor}`, `${oldMajor}.${oldMinor}`);
+  } catch {
+    console.error("Failed to update security.md");
+  }
+  try {
+    /** Create new release branch for every Major or Minor release */
+    execSync(`git checkout -b ${releaseBranch} && git push origin ${releaseBranch}`);
+  } catch {
+    console.error("Failed to create release branch");
+  }
 }
 
 const { visibility } = JSON.parse(execSync("gh repo view --json visibility").toString());
