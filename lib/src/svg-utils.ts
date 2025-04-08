@@ -32,7 +32,7 @@ const tightlyCropSvg = async (
     container.appendChild(svgContainer);
     const svgEl = svgContainer.querySelector("svg");
 
-    if (!svgEl) return reject(new Error("No <svg> found"));
+    if (!svgEl || svgEl.nodeType !== 1) return reject(new Error("No or invalid <svg> found"));
 
     requestAnimationFrame(() => {
       try {
@@ -87,44 +87,56 @@ export const handleSvg = async (
   svg: string,
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
-  const img = new Image();
-  const container = getContainer(options);
-  container.appendChild(img);
+  try {
+    const img = new Image();
+    const container = getContainer(options);
+    container.appendChild(img);
 
-  const croppedSvg = await tightlyCropSvg(svg, container);
-  const svgDataURL = await svgToBase64(croppedSvg.svg);
-  img.src = svgDataURL;
+    const croppedSvg = await tightlyCropSvg(svg, container);
+    const svgDataURL = await svgToBase64(croppedSvg.svg);
+    img.src = svgDataURL;
 
-  await new Promise(resolve => (img.onload = resolve));
+    await new Promise(resolve => (img.onload = resolve));
 
-  const width = img.width * options.scale;
-  const height = img.height * options.scale;
+    const width = img.width * options.scale;
+    const height = img.height * options.scale;
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-  /* v8 ignore start */
-  if (!ctx) throw new Error("Canvas context not available");
+    /* v8 ignore start */
+    if (!ctx) throw new Error("Canvas context not available");
 
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(img, 0, 0, width, height);
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
 
-  const data = canvas.toDataURL(`image/${options.fallbackImageType}`);
-  img.remove();
+    const data = canvas.toDataURL(`image/${options.fallbackImageType}`);
+    img.remove();
 
-  const scale = Math.min(
-    ((options.maxW * options.dpi) / width) * croppedSvg.scale,
-    ((options.maxH * options.dpi) / height) * croppedSvg.scale,
-    1,
-  );
-  return {
-    type: options.fallbackImageType,
-    data,
-    transformation: {
-      width: width * scale,
-      height: height * scale,
-    },
-  };
+    const scale = Math.min(
+      ((options.maxW * options.dpi) / width) * croppedSvg.scale,
+      ((options.maxH * options.dpi) / height) * croppedSvg.scale,
+      1,
+    );
+    return {
+      type: options.fallbackImageType,
+      data,
+      transformation: {
+        width: width * scale,
+        height: height * scale,
+      },
+    };
+  } catch (error) {
+    console.error("Error resolving SVG image: ", svg, error);
+    return {
+      type: "png",
+      data: Buffer.from([]),
+      transformation: {
+        width: 100,
+        height: 100,
+      },
+    };
+  }
   /* v8 ignore stop */
 };
