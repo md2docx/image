@@ -21,7 +21,6 @@ const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
   const dummyText = "<svg></svg>";
   const dummyArrayBuffer = new TextEncoder().encode(dummyText).buffer;
 
-  console.log("mocking --- ", input);
   return {
     ok: true,
     status: 200,
