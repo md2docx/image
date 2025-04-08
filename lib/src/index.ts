@@ -1,13 +1,5 @@
 import type { IImageOptions } from "docx";
-import type {
-  Image,
-  ImageReference,
-  IPlugin,
-  Mutable,
-  Optional,
-  PhrasingContent,
-  SVG,
-} from "@m2d/core";
+import type { Image, ImageReference, IPlugin, Optional, SVG } from "@m2d/core";
 import { handleSvg } from "./svg-utils";
 
 /**

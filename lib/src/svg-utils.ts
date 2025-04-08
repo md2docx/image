@@ -21,11 +21,11 @@ const svgToBase64 = (svg: string): Promise<string> => {
 /**
  * Crops an SVG element tightly to its contents and adjusts dimensions.
  */
-const tightlyCropSvg = async (
+const tightlyCropSvg = (
   svgRaw: string,
   container: HTMLDivElement,
-): Promise<{ svg: string; scale: number }> => {
-  return new Promise((resolve, reject) => {
+): Promise<{ svg: string; scale: number }> =>
+  new Promise((resolve, reject) => {
     const svgContainer = document.createElement("div");
     svgContainer.innerHTML = svgRaw;
     svgContainer.style = "width:100%;height:100%;position:absolute;";
@@ -64,12 +64,11 @@ const tightlyCropSvg = async (
       }
     });
   });
-};
 
+let container: HTMLDivElement;
 /**
  * Ensures a singleton offscreen container used to render and measure SVG content.
  */
-let container: HTMLDivElement;
 const getContainer = (options: IDefaultImagePluginOptions) => {
   if (!container) {
     container = document.createElement("div");

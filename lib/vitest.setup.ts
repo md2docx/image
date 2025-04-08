@@ -5,7 +5,7 @@ globalThis.createImageBitmap = vi.fn(async () => {
   return {
     width: 100,
     height: 100,
-    close: () => {},
+    close: vi.fn(() => {}),
   };
 });
 
@@ -61,11 +61,11 @@ globalThis.fetch = mockFetch;
 // setupTests.ts or in your test file
 
 globalThis.Image = class {
-  _src: string = "";
+  _src = "";
   width?: number;
   height?: number;
   onload: (() => void) | null = null;
-  onerror: ((err?: any) => void) | null = null;
+  onerror: ((err?: unknown) => void) | null = null;
 
   constructor(width?: number, height?: number) {
     this.width = width;
