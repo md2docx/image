@@ -7,10 +7,11 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: [],
+    setupFiles: ["./vitest.setup.ts"],
     coverage: {
       include: ["src/**"],
-      exclude: ["src/**/*.test.*", "src/**/declaration.d.ts"],
+      // No proper way to test DOM interactions with SVG yet
+      exclude: ["src/**/*.test.*", "src/**/svg-utils.ts", "src/**/declaration.d.ts"],
       reporter: ["text", "json", "clover", "html"],
     },
   },
