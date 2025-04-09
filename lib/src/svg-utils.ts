@@ -57,7 +57,9 @@ const tightlyCropSvg = (
 
         const svg = new XMLSerializer().serializeToString(clonedSvg);
         svgContainer.remove();
-        resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH, 1) });
+
+        if (Math.max(croppedW / origW, croppedH / origH) > 1) resolve({ svg: svgRaw, scale: 1 });
+        else resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH) });
       } catch (err) {
         svgContainer.remove();
         reject(err);
@@ -92,6 +94,8 @@ export const handleSvg = async (
     container.appendChild(img);
 
     const croppedSvg = await tightlyCropSvg(svg, container);
+
+    console.log({ svg, croppedSvg });
     const svgDataURL = await svgToBase64(croppedSvg.svg);
     img.src = svgDataURL;
 
