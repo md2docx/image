@@ -113,11 +113,9 @@ export const handleSvg = async (
     const data = canvas.toDataURL(`image/${options.fallbackImageType}`);
     img.remove();
 
-    const scale = Math.min(
-      ((options.maxW * options.dpi) / width) * croppedSvg.scale,
-      ((options.maxH * options.dpi) / height) * croppedSvg.scale,
-      1,
-    );
+    const scale =
+      Math.min((options.maxW * options.dpi) / width, (options.maxH * options.dpi) / height, 1) *
+      croppedSvg.scale;
     return {
       type: options.fallbackImageType,
       data,

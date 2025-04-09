@@ -15,13 +15,20 @@
       "id": "wkDDELNeOfYSVmWI1eWu0",
       "description": "Install the recommended VSCode extensions:\n  - [Trello Kanban](https://marketplace.visualstudio.com/items?itemName=mayank1513.trello-kanban-task-board)",
       "columnId": "column-done"
+    },
+    "tzNWm0BPB1EAL5TXnQxfI": {
+      "id": "tzNWm0BPB1EAL5TXnQxfI",
+      "description": "Update unit test set up for all plugins",
+      "columnId": "column-todo"
     }
   },
   "columns": [
     {
       "id": "column-todo",
       "title": "To do",
-      "tasksIds": []
+      "tasksIds": [
+        "tzNWm0BPB1EAL5TXnQxfI"
+      ]
     },
     {
       "id": "column-doing",
