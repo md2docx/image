@@ -2,6 +2,7 @@
 
 import type { IImageOptions } from "docx";
 import { IDefaultImagePluginOptions } from ".";
+import { SVG } from "@m2d/core";
 
 /**
  * Converts a raw SVG string into a base64-encoded data URL.
@@ -57,9 +58,7 @@ const tightlyCropSvg = (
 
         const svg = new XMLSerializer().serializeToString(clonedSvg);
         svgContainer.remove();
-
-        if (Math.max(croppedW / origW, croppedH / origH) > 1) resolve({ svg: svgRaw, scale: 1 });
-        else resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH) });
+        resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH, 1) });
       } catch (err) {
         svgContainer.remove();
         reject(err);
@@ -85,22 +84,24 @@ const getContainer = (options: IDefaultImagePluginOptions) => {
  * Converts SVG into fallback raster image (PNG/JPG/etc.) for DOCX insertion.
  */
 export const handleSvg = async (
-  svg: string,
+  svgNode: SVG,
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
+  const svg = svgNode.value;
   try {
     const img = new Image();
     const container = getContainer(options);
     container.appendChild(img);
+    // @ts-expect-error -- extra data
+    const isGantt = /(?:^|\n)\s*gantt\s*/.test(svgNode.data?.mermaid);
+    const croppedSvg = isGantt ? { svg, scale: 1 } : await tightlyCropSvg(svg, container);
 
-    const croppedSvg = await tightlyCropSvg(svg, container);
-
-    console.log({ svg, croppedSvg });
     const svgDataURL = await svgToBase64(croppedSvg.svg);
     img.src = svgDataURL;
 
     await new Promise(resolve => (img.onload = resolve));
 
+    if (isGantt) options.scale *= 2; // Increase Gantt chart resolution - can be enlarge more without getting blurred
     const width = img.width * options.scale;
     const height = img.height * options.scale;
 

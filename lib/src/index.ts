@@ -173,7 +173,7 @@ const handleNonDataUrls = async (
 
   if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
     const svgText = await response.text();
-    return handleSvg(svgText, options);
+    return handleSvg({ type: "svg", value: svgText, id: `s${crypto.randomUUID()}` }, options);
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -253,7 +253,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
 
         const imgOptions =
           node.type === "svg"
-            ? await handleSvg(node.value, options)
+            ? await handleSvg(node, options)
             : await options.imageResolver(url, options);
 
         // apply data props
