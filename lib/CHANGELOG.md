@@ -1,5 +1,13 @@
 # @m2d/image
 
+## 0.1.1
+
+### Patch Changes
+
+- 25bf5f0: fix: avoid enlargement in tightlyCropSvg to avoid issues with gantt charts, etc.
+- 6ee90b2: enhance: scale images appropreately to avoid extra enlargement after cropping.
+- a0d6990: Do not tight crop Gantt charts.
+
 ## 0.1.0
 
 ### Minor Changes
