@@ -13,6 +13,7 @@ try {
   execSync("pnpm changeset version");
   execSync(
     `git add . && git commit -m "Apply changesets and update CHANGELOG [skip ci]" && git push origin ${BRANCH}`,
+    { stdio: "inherit" },
   );
 } catch {
   // no changesets to be applied
@@ -40,17 +41,22 @@ if (isPatch) {
   try {
     execSync(
       `git checkout ${releaseBranch} && git merge ${BRANCH} && git push origin ${releaseBranch}`,
+      { stdio: "inherit" },
     );
   } catch {}
 } else {
   try {
-    require("./update-security-md")(`${newMajor}.${newMinor}`, `${oldMajor}.${oldMinor}`);
+    require("./update-security-md")(`${newMajor}.${newMinor}`, `${oldMajor}.${oldMinor}`, {
+      stdio: "inherit",
+    });
   } catch {
     console.error("Failed to update security.md");
   }
   try {
     /** Create new release branch for every Major or Minor release */
-    execSync(`git checkout -b ${releaseBranch} && git push origin ${releaseBranch}`);
+    execSync(`git checkout -b ${releaseBranch} && git push origin ${releaseBranch}`, {
+      stdio: "inherit",
+    });
   } catch {
     console.error("Failed to create release branch");
   }
@@ -61,7 +67,9 @@ const provenance = visibility.toLowerCase() === "public" ? "--provenance" : "";
 
 try {
   /** Publish to NPM */
-  execSync(`cd lib && pnpm build && npm publish ${provenance} --access public`);
+  execSync(`cd lib && pnpm build && npm publish ${provenance} --access public`, {
+    stdio: "inherit",
+  });
 } catch (err) {
   console.error("Failed to publish to NPM -- ", err);
 }
@@ -75,6 +83,7 @@ try {
   try {
     execSync(
       `gh release create ${VERSION} --generate-notes --latest --title "Release v${VERSION}"`,
+      { stdio: "inherit" },
     );
   } catch {
     console.error("Failed to create GitHub release");
@@ -83,7 +92,7 @@ try {
 
 try {
   // Publish canonical packages
-  execSync("node scripts/publish-canonical.js");
+  execSync("node scripts/publish-canonical.js", { stdio: "inherit" });
 } catch {
   console.error("Failed to publish canonical packages");
 }
