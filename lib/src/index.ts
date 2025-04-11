@@ -18,6 +18,7 @@ const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as const;
 export type ImageResolver = (
   src: string,
   options: IDefaultImagePluginOptions,
+  isPlaceholder?: boolean,
 ) => Promise<IImageOptions>;
 
 /**
@@ -52,6 +53,11 @@ export interface IDefaultImagePluginOptions {
    * Maximum allowed image height in inches.
    */
   maxH: number;
+
+  /**
+   * Placeholder Image Src
+   */
+  placeholder: string;
 
   /**
    * Target DPI (dots per inch) to calculate dimensions from pixels.
@@ -196,6 +202,12 @@ const handleNonDataUrls = async (
   };
 };
 
+let placeholderImg: IImageOptions;
+const createPlaceholder = async (src: string, options: IDefaultImagePluginOptions) => {
+  if (!placeholderImg) placeholderImg = await imageResolver(src, options, true);
+  return placeholderImg;
+};
+
 /**
  * Resolves an image source to a DOCX-compatible image object.
  * Supports both base64 data URLs and remote URLs.
@@ -204,21 +216,23 @@ const handleNonDataUrls = async (
  * @param options - Plugin configuration.
  * @returns Resolved image options or fallback.
  */
-const imageResolver: ImageResolver = async (src, options) => {
+const imageResolver: ImageResolver = async (src, options, isPlaceholder = false) => {
   try {
     return src.startsWith("data:")
       ? await handleDataUrls(src, options)
       : await handleNonDataUrls(src, options);
   } catch (error) {
     console.error(`Error resolving image: ${src}`, error);
-    return {
-      type: "png",
-      data: Buffer.from([]),
-      transformation: {
-        width: 100,
-        height: 100,
-      },
-    };
+    if (isPlaceholder)
+      return {
+        type: "gif",
+        data: defaultOptions.placeholder,
+        transformation: {
+          width: 200,
+          height: 200,
+        },
+      };
+    else return createPlaceholder(src, options);
   }
 };
 
@@ -232,6 +246,7 @@ const defaultOptions: IDefaultImagePluginOptions = {
   // A4 page size with standard margins
   maxW: 6.3,
   maxH: 9.7,
+  placeholder: "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
   dpi: 96,
 };
 
