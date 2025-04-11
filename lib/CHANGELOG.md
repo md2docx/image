@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 0.2.1
+
+### Patch Changes
+
+- c75c66d: fix: Update Readme
+
 ## 0.2.0
 
 ### Minor Changes
