@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 0.1.2
+
+### Patch Changes
+
+- dfddd4d: Add placeholder image option
+
 ## 0.1.1
 
 ### Patch Changes
