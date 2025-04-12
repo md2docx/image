@@ -57,7 +57,7 @@ export interface IDefaultImagePluginOptions {
   /**
    * Placeholder Image Src
    */
-  placeholder: string;
+  placeholder?: string;
 
   /**
    * Target DPI (dots per inch) to calculate dimensions from pixels.
@@ -202,12 +202,7 @@ const handleNonDataUrls = async (
   };
 };
 
-let placeholderImg: IImageOptions;
-const createPlaceholder = async (src: string, options: IDefaultImagePluginOptions) => {
-  if (!placeholderImg) placeholderImg = await imageResolver(src, options, true);
-  return placeholderImg;
-};
-
+let placeholderImg: IImageOptions | null = null;
 /**
  * Resolves an image source to a DOCX-compatible image object.
  * Supports both base64 data URLs and remote URLs.
@@ -223,16 +218,18 @@ const imageResolver: ImageResolver = async (src, options, isPlaceholder = false)
       : await handleNonDataUrls(src, options);
   } catch (error) {
     console.error(`Error resolving image: ${src}`, error);
-    if (isPlaceholder)
+    if (isPlaceholder || !options.placeholder)
       return {
         type: "gif",
-        data: defaultOptions.placeholder,
+        data: "",
         transformation: {
           width: 200,
           height: 200,
         },
       };
-    else return createPlaceholder(src, options);
+    return (
+      placeholderImg || (placeholderImg = await imageResolver(options.placeholder, options, true))
+    );
   }
 };
 
@@ -246,7 +243,6 @@ const defaultOptions: IDefaultImagePluginOptions = {
   // A4 page size with standard margins
   maxW: 6.3,
   maxH: 9.7,
-  placeholder: "data:image/gif;base64,R0lGODlhAQABAAAAACw=",
   dpi: 96,
 };
 

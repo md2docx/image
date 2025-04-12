@@ -31,7 +31,7 @@ export function Demo() {
       mdast,
       {},
       {
-        plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin()],
+        plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin({ placeholder: "/placeholder.png" })],
       },
     ).then(blob => {
       const url = URL.createObjectURL(blob as Blob);

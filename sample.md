@@ -2,6 +2,10 @@
 
 Embedding images in Markdown.
 
+Non existent image replaced by placeholder image.
+
+![I do not exist](https://example.com/some.jpg)
+
 SVG:
 
 ![Markdown Logo](https://upload.wikimedia.org/wikipedia/commons/4/48/Markdown-mark.svg)
