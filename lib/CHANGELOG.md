@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 0.2.2
+
+### Patch Changes
+
+- 43aeaf2: Fix placeholder image.
+
 ## 0.2.1
 
 ### Patch Changes
