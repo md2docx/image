@@ -23,7 +23,7 @@
     "@types/node": "^22.14.1",
     "enquirer": "^2.4.1",
     "prettier": "^3.5.3",
-    "turbo": "^2.5.0"
+    "turbo": "^2.5.1"
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {
