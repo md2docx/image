@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 0.2.3
+
+### Patch Changes
+
+- 5c0e37c: Fix: Improve error handling
+
 ## 0.2.2
 
 ### Patch Changes

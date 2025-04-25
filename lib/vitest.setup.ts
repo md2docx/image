@@ -39,6 +39,20 @@ const mockFetch = vi.fn(async (url: string) => {
     };
   }
 
+  if (url.includes("example")) {
+    return {
+      ok: false,
+      status: 404,
+      headers: {
+        get: (header: string) => {
+          if (header.toLowerCase() === "content-type") return "image/png";
+          return null;
+        },
+      },
+      arrayBuffer: async () => new Uint8Array().buffer,
+    };
+  }
+
   // For PNG or other image mocks
   const fakePng = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG file signature
   return {
