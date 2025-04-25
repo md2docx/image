@@ -203,6 +203,26 @@ const handleNonDataUrls = async (
 };
 
 let placeholderImg: IImageOptions | null = null;
+let shouldEmitEmptyPlaceholder = false;
+/**
+ * Generate placeholder image
+ */
+export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) => {
+  if (!placeholderImg && options.placeholder && !shouldEmitEmptyPlaceholder) {
+    shouldEmitEmptyPlaceholder = true;
+    placeholderImg = await imageResolver(options.placeholder, options);
+  } else {
+    placeholderImg = {
+      type: "gif",
+      data: "",
+      transformation: {
+        width: 200,
+        height: 200,
+      },
+    };
+  }
+  return placeholderImg;
+};
 /**
  * Resolves an image source to a DOCX-compatible image object.
  * Supports both base64 data URLs and remote URLs.
@@ -211,25 +231,14 @@ let placeholderImg: IImageOptions | null = null;
  * @param options - Plugin configuration.
  * @returns Resolved image options or fallback.
  */
-const imageResolver: ImageResolver = async (src, options, isPlaceholder = false) => {
+const imageResolver: ImageResolver = async (src, options) => {
   try {
     return src.startsWith("data:")
       ? await handleDataUrls(src, options)
       : await handleNonDataUrls(src, options);
   } catch (error) {
     console.error(`Error resolving image: ${src}`, error);
-    if (isPlaceholder || !options.placeholder)
-      return {
-        type: "gif",
-        data: "",
-        transformation: {
-          width: 200,
-          height: 200,
-        },
-      };
-    return (
-      placeholderImg || (placeholderImg = await imageResolver(options.placeholder, options, true))
-    );
+    return getPlaceHolderImage(options);
   }
 };
 

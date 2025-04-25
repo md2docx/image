@@ -1,7 +1,7 @@
 // svg-utils.ts
 
 import type { IImageOptions } from "docx";
-import { IDefaultImagePluginOptions } from ".";
+import { getPlaceHolderImage, IDefaultImagePluginOptions } from ".";
 import { SVG } from "@m2d/core";
 
 /**
@@ -131,14 +131,7 @@ export const handleSvg = async (
     };
   } catch (error) {
     console.error("Error resolving SVG image: ", error);
-    return {
-      type: "png",
-      data: Buffer.from([]),
-      transformation: {
-        width: 100,
-        height: 100,
-      },
-    };
+    return getPlaceHolderImage(options);
   }
   /* v8 ignore stop */
 };
