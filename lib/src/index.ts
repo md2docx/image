@@ -210,6 +210,7 @@ let shouldEmitEmptyPlaceholder = false;
 export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) => {
   if (!placeholderImg && options.placeholder && !shouldEmitEmptyPlaceholder) {
     shouldEmitEmptyPlaceholder = true;
+    // skipcq: JS-0357
     placeholderImg = await imageResolver(options.placeholder, options);
   } else {
     placeholderImg = {
