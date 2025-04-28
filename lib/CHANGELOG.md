@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 0.2.4
+
+### Patch Changes
+
+- a9f8cb3: limit scaling Gantt chart to avoid painting issues
+
 ## 0.2.3
 
 ### Patch Changes
