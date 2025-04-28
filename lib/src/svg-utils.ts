@@ -101,7 +101,13 @@ export const handleSvg = async (
 
     await new Promise(resolve => (img.onload = resolve));
 
-    if (isGantt) options.scale *= 2; // Increase Gantt chart resolution - can be enlarge more without getting blurred
+    // Increase Gantt chart resolution - can be enlarge more without getting blurred
+    if (isGantt)
+      options.scale = Math.max(
+        options.scale,
+        Math.floor(Math.min(innerWidth / img.width, innerHeight / img.height)),
+      );
+
     const width = img.width * options.scale;
     const height = img.height * options.scale;
 
