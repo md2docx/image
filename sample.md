@@ -1,5 +1,22 @@
 ## Images
 
+```mmd
+gantt
+  title Banking Sector - Investment Timeline
+  dateFormat YYYY-MM-DD
+  axisFormat %Y-%m-%d
+  section HDFC Bank
+  Strategy Implementation           :a1, 2025-01-01, 90d
+  section ICICI Bank
+  Digital Expansion                 :a2, 2025-02-15, 75d
+  section SBI
+  Rural Initiatives                 :a3, 2025-03-01, 60d
+  section Axis Bank
+  Corporate Lending                 :a4, 2025-03-15, 45d
+  section Kotak Mahindra Bank
+  Wealth Management                 :a5, 2025-04-01, 30d
+```
+
 Embedding images in Markdown.
 
 Non existent image replaced by placeholder image.
