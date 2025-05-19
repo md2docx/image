@@ -268,7 +268,45 @@ const defaultOptions: IDefaultImagePluginOptions = {
   dpi: 96,
 };
 
-const cache: Record<string, IImageOptions> = {};
+const cache: Record<string, Promise<IImageOptions>> = {};
+
+/**
+ * Generate image data
+ *
+ * Extracting this logic in an async function for the purpose of caching the promises
+ */
+const createImageData = async (
+  node: Image | SVG,
+  url: string,
+  options: IDefaultImagePluginOptions,
+) => {
+  const imgOptions =
+    node.type === "svg"
+      ? await handleSvg(node, options)
+      : await options.imageResolver(url, options);
+
+  // apply data props
+  const { data } = node as Image;
+  const { width: origW, height: origH } = imgOptions.transformation;
+  let { width, height } = data ?? {};
+  if (width && !height) {
+    height = (origH * width) / origW;
+  } else if (!width && height) {
+    width = (origW * height) / origH;
+  } else if (!width && !height) {
+    height = origH;
+    width = origW;
+  }
+
+  const scale = Math.min(
+    (options.maxW * options.dpi) / width!,
+    (options.maxH * options.dpi) / height!,
+    1,
+  );
+  // @ts-expect-error -- we are mutating the immutable options.
+  imgOptions.transformation = { width: width * scale, height: height * scale };
+  return imgOptions;
+};
 
 /**
  * Image plugin for processing inline image nodes in the Markdown AST.
@@ -292,38 +330,18 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
         promises.push(
           (async () => {
             // Only process image nodes
-            const alt = (node as Image).alt ?? (node as Image).url?.split("/")?.pop() ?? "";
             const url =
               (node as Image).url ??
               definitions[(node as ImageReference).identifier?.toUpperCase()];
 
-            const imgOptions =
-              node.type === "svg"
-                ? await handleSvg(node, options)
-                : await options.imageResolver(url, options);
+            // for SVG if the value is promise, it must have mermaid. We will in future provide better type safety after considering if there are any other mermaid like tools that we might want to support
+            const cacheKey = node.type === "svg" ? (node.data?.mermaid ?? String(node.value)) : url;
 
-            // apply data props
-            const { data } = node as Image;
-            const { width: origW, height: origH } = imgOptions.transformation;
-            let { width, height } = data ?? {};
-            if (width && !height) {
-              height = (origH * width) / origW;
-            } else if (!width && height) {
-              width = (origW * height) / origH;
-            } else if (!width && !height) {
-              height = origH;
-              width = origW;
-            }
+            cache[cacheKey] ??= createImageData(node as Image | SVG, url, options);
+            const alt = (node as Image).alt ?? url?.split("/")?.pop() ?? "";
 
-            const scale = Math.min(
-              (options.maxW * options.dpi) / width!,
-              (options.maxH * options.dpi) / height!,
-              1,
-            );
-            // @ts-expect-error -- we are mutating the immutable options.
-            imgOptions.transformation = { width: width * scale, height: height * scale };
             node.data = {
-              ...imgOptions,
+              ...(await cache[cacheKey]),
               altText: { description: alt, name: alt, title: alt },
               ...(node as Image | SVG).data,
             };

@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@m2d/html": "^1.0.1",
-    "@m2d/mermaid": "^1.0.0",
+    "@m2d/mermaid": "^1.0.1",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/jsdom": "^21.1.7",
