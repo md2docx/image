@@ -1,5 +1,15 @@
 # @m2d/image
 
+## 1.0.0
+
+### Major Changes
+
+- 553a654: Changing the plugin signature in accordace with this discussion - https://github.com/md2docx/mdast2docx/discussions/15
+
+### Minor Changes
+
+- 9d1f896: Use caching
+
 ## 0.2.4
 
 ### Patch Changes

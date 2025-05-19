@@ -2,7 +2,7 @@
   "name": "@m2d/image",
   "author": "Mayank Kumar Chaudhari (https://mayank-chaudhari.vercel.app)",
   "private": false,
-  "version": "0.2.4",
+  "version": "1.0.0",
   "description": "MDAST to DOCX plugin for resolving and embedding images. Supports base64, URLs, and custom resolvers for seamless DOCX image integration.",
   "license": "MPL-2.0",
   "main": "./dist/index.js",
