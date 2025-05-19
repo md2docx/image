@@ -87,7 +87,8 @@ export const handleSvg = async (
   svgNode: SVG,
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
-  const svg = svgNode.value;
+  const value = svgNode.value;
+  const svg = typeof value === "string" ? value : (await value).svg;
   try {
     const img = new Image();
     const container = getContainer(options);
