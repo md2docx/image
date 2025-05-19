@@ -94,7 +94,7 @@ export const handleSvg = async (
     const container = getContainer(options);
     container.appendChild(img);
     // @ts-expect-error -- extra data
-    const isGantt = /(?:^|\n)\s*gantt\s*/.test(svgNode.data?.mermaid);
+    const isGantt = /^\s*gantt\s*/.test(svgNode.data?.mermaid);
     const croppedSvg = isGantt ? { svg, scale: 1 } : await tightlyCropSvg(svg, container);
 
     const svgDataURL = await svgToBase64(croppedSvg.svg);
