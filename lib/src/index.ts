@@ -1,6 +1,18 @@
 import type { IImageOptions } from "docx";
-import type { Image, ImageReference, IPlugin, Optional, SVG } from "@m2d/core";
+import type {
+  Image,
+  ImageData,
+  ImageReference,
+  IPlugin,
+  Optional,
+  Parent,
+  PhrasingContent,
+  Root,
+  RootContent,
+  SVG,
+} from "@m2d/core";
 import { handleSvg } from "./svg-utils";
+import { Definitions } from "@m2d/core/utils";
 
 /**
  * List of image types directly supported by `docx`.
@@ -179,7 +191,7 @@ const handleNonDataUrls = async (
 
   if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
     const svgText = await response.text();
-    return handleSvg({ type: "svg", value: svgText, id: `s${crypto.randomUUID()}` }, options);
+    return handleSvg({ type: "svg", value: svgText }, options);
   }
 
   const arrayBuffer = await response.arrayBuffer();
@@ -256,6 +268,46 @@ const defaultOptions: IDefaultImagePluginOptions = {
   dpi: 96,
 };
 
+const cache: Record<string, Promise<IImageOptions>> = {};
+
+/**
+ * Generate image data
+ *
+ * Extracting this logic in an async function for the purpose of caching the promises
+ */
+const createImageData = async (
+  node: Image | SVG,
+  url: string,
+  options: IDefaultImagePluginOptions,
+) => {
+  const imgOptions =
+    node.type === "svg"
+      ? await handleSvg(node, options)
+      : await options.imageResolver(url, options);
+
+  // apply data props
+  const { data } = node as Image;
+  const { width: origW, height: origH } = imgOptions.transformation;
+  let { width, height } = data ?? {};
+  if (width && !height) {
+    height = (origH * width) / origW;
+  } else if (!width && height) {
+    width = (origW * height) / origH;
+  } else if (!width && !height) {
+    height = origH;
+    width = origW;
+  }
+
+  const scale = Math.min(
+    (options.maxW * options.dpi) / width!,
+    (options.maxH * options.dpi) / height!,
+    1,
+  );
+  // @ts-expect-error -- we are mutating the immutable options.
+  imgOptions.transformation = { width: width * scale, height: height * scale };
+  return imgOptions;
+};
+
 /**
  * Image plugin for processing inline image nodes in the Markdown AST.
  * Resolves both base64 and URL-based images for inclusion in DOCX.
@@ -264,48 +316,48 @@ const defaultOptions: IDefaultImagePluginOptions = {
  * @returns Plugin implementation for use in the `@m2d/core` pipeline.
  */
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
-  const options: IDefaultImagePluginOptions = { ...defaultOptions, ...options_ };
-  return {
-    inline: async (docx, node, runProps, definitions) => {
-      if (/^(image|svg)/.test(node.type)) {
-        const alt = (node as Image).alt ?? (node as Image).url?.split("/")?.pop() ?? "";
-        const url =
-          (node as Image).url ?? definitions[(node as ImageReference).identifier?.toUpperCase()];
+  const options = { ...defaultOptions, ...options_ };
 
-        const imgOptions =
-          node.type === "svg"
-            ? await handleSvg(node, options)
-            : await options.imageResolver(url, options);
+  /** preprocess images */
+  const preprocess = async (root: Root, definitions: Definitions) => {
+    const promises: Promise<void>[] = [];
 
-        // apply data props
-        const { data } = node as Image;
-        const { width: origW, height: origH } = imgOptions.transformation;
-        let { width, height } = data ?? {};
-        if (width && !height) {
-          height = (origH * width) / origW;
-        } else if (!width && height) {
-          width = (origW * height) / origH;
-        } else if (!width && !height) {
-          height = origH;
-          width = origW;
-        }
+    /** process images and create promises - use max parallel processing */
+    const preprocessInternal = (node: Root | RootContent | PhrasingContent) => {
+      (node as Parent).children?.forEach(preprocessInternal);
 
-        const scale = Math.min(
-          (options.maxW * options.dpi) / width!,
-          (options.maxH * options.dpi) / height!,
-          1,
+      if (/^(image|svg)/.test(node.type))
+        promises.push(
+          (async () => {
+            // Only process image nodes
+            const url =
+              (node as Image).url ??
+              definitions[(node as ImageReference).identifier?.toUpperCase()];
+
+            // for SVG if the value is promise, it must have mermaid. We will in future provide better type safety after considering if there are any other mermaid like tools that we might want to support
+            const cacheKey = node.type === "svg" ? (node.data?.mermaid ?? String(node.value)) : url;
+
+            cache[cacheKey] ??= createImageData(node as Image | SVG, url, options);
+            const alt = (node as Image).alt ?? url?.split("/")?.pop() ?? "";
+
+            node.data = {
+              ...(await cache[cacheKey]),
+              altText: { description: alt, name: alt, title: alt },
+              ...(node as Image | SVG).data,
+            };
+          })(),
         );
-        // @ts-expect-error -- we are mutating the immutable options.
-        imgOptions.transformation = { width: width * scale, height: height * scale };
-        node.type = "";
-        return [
-          new docx.ImageRun({
-            ...imgOptions,
-            altText: { description: alt, name: alt, title: alt },
-            ...runProps,
-            ...(node as Image | SVG).data,
-          }),
-        ];
+    };
+    preprocessInternal(root);
+    await Promise.all(promises);
+  };
+  return {
+    preprocess,
+    inline: (docx, node, runProps) => {
+      if (/^(image|svg)/.test(node.type)) {
+        const { imageOptions, ...data } = (node as Image).data as ImageData;
+        // @ts-expect-error -- merging a lot of data types here
+        return [new docx.ImageRun({ ...imageOptions, ...data, ...runProps })];
       }
       return [];
     },

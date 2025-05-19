@@ -1,3 +1,4 @@
+import { Root, RootContent, PhrasingContent, Parent, SVG } from "@m2d/core";
 import { vi } from "vitest";
 
 // Mock createImageBitmap
@@ -76,30 +77,86 @@ globalThis.fetch = mockFetch;
 
 globalThis.Image = class {
   _src = "";
-  width?: number;
-  height?: number;
+  width = 100;
+  height = 100;
   onload: (() => void) | null = null;
   onerror: ((err?: unknown) => void) | null = null;
 
-  constructor(width?: number, height?: number) {
-    this.width = width;
-    this.height = height;
-
-    // Simulate async image load
-    setTimeout(() => {
-      if (this.onload) this.onload();
-    }, 10);
-  }
-
   set src(value: string) {
     this._src = value;
-    // Simulate async loading
+
+    // simulate successful image load after a small delay
     setTimeout(() => {
       if (this.onload) this.onload();
-    }, 10);
+    }, 1);
   }
 
   get src() {
     return this._src;
   }
 } as unknown as typeof Image;
+
+const originalCreateElement = document.createElement;
+
+document.createElement = vi.fn((tagName: string) => {
+  if (tagName.toLowerCase() === "img") {
+    const fakeImg: any = {
+      _src: "",
+      width: 100,
+      height: 100,
+      set src(value: string) {
+        this._src = value;
+        // Simulate async load
+        setTimeout(() => this.onload?.(), 1);
+      },
+      get src() {
+        return this._src;
+      },
+      onload: null,
+      onerror: null,
+    };
+    return fakeImg;
+  }
+
+  return originalCreateElement.call(document, tagName);
+});
+
+vi.mock("@m2d/mermaid", () => {
+  const preprocess = (node: Root | RootContent | PhrasingContent) => {
+    // Preprocess the AST to detect and cache Mermaid or Mindmap blocks
+    (node as Parent).children?.forEach(preprocess);
+
+    // Only process code blocks with a supported language tag
+    if (node.type === "code" && /(mindmap|mermaid|mmd)/.test(node.lang ?? "")) {
+      // Create an extended MDAST-compatible SVG node
+      const svgNode: SVG = {
+        type: "svg",
+        value: '<svg xmlns="http://www.w3.org/2000/svg"><text>Mock</text></svg>',
+        // Store original Mermaid source in data for traceability/debug
+        data: { mermaid: node.value },
+      };
+
+      // Replace the code block with a paragraph that contains the SVG
+      Object.assign(node, {
+        type: "paragraph",
+        children: [svgNode],
+        data: { alignment: "center" }, // center-align diagram
+      });
+    }
+  };
+  return {
+    __esModule: true,
+    mermaidPlugin: () => ({
+      preprocess,
+    }),
+  };
+});
+
+(SVGElement.prototype as any).getComputedTextLength = () => 100; // or any fixed number
+
+(HTMLCanvasElement.prototype as any).getContext = vi.fn(() => {
+  return {
+    drawImage: vi.fn(),
+    toDataURL: vi.fn(() => "data:image/png;base64,fakepng"),
+  };
+});

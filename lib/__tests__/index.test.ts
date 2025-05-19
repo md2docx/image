@@ -17,6 +17,7 @@ describe.concurrent("toDocx", () => {
     const docxBlob = await toDocx(
       mdast,
       {},
+      // @ts-expect-error -- plugin types mismatch for time being
       { plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin()] },
     );
     expect(docxBlob).toBeInstanceOf(Blob);
