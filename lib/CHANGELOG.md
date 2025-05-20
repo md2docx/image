@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.0.1
+
+### Patch Changes
+
+- ecc0afa: fix image data types
+
 ## 1.0.0
 
 ### Major Changes
