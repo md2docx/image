@@ -31,7 +31,6 @@ export function Demo() {
       mdast,
       {},
       {
-        // @ts-expect-error -- plugin types mismatch for the time being
         plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin({ placeholder: "/placeholder.png" })],
       },
     ).then(blob => {

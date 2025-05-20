@@ -1,7 +1,6 @@
 import type { IImageOptions } from "docx";
 import type {
   Image,
-  ImageData,
   ImageReference,
   IPlugin,
   Optional,
@@ -299,7 +298,9 @@ const createImageData = async (
   }
 
   const scale = Math.min(
+    // skipcq: JS-0339
     (options.maxW * options.dpi) / width!,
+    // skipcq: JS-0339
     (options.maxH * options.dpi) / height!,
     1,
   );
@@ -355,9 +356,8 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     preprocess,
     inline: (docx, node, runProps) => {
       if (/^(image|svg)/.test(node.type)) {
-        const { imageOptions, ...data } = (node as Image).data as ImageData;
-        // @ts-expect-error -- merging a lot of data types here
-        return [new docx.ImageRun({ ...imageOptions, ...data, ...runProps })];
+        // @ts-expect-error -- adding extra props
+        return [new docx.ImageRun({ ...(node as Image).data, ...runProps })];
       }
       return [];
     },
