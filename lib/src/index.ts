@@ -12,7 +12,8 @@ import type {
 } from "@m2d/core";
 import { handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
-import { imageCache } from "./idb-utils";
+import { imageCache } from "./cache-utils";
+import { getImageMimeType, getPlaceHolderImage } from "./utils";
 
 /**
  * List of image types directly supported by `docx`.
@@ -30,6 +31,7 @@ const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as const;
 export type ImageResolver = (
   src: string,
   options: IDefaultImagePluginOptions,
+  node?: Image | SVG,
 ) => Promise<IImageOptions>;
 
 /**
@@ -79,38 +81,6 @@ export interface IDefaultImagePluginOptions {
  * The `dpi` field is managed internally and excluded.
  */
 type IImagePluginOptions = Optional<Omit<IDefaultImagePluginOptions, "dpi">>;
-
-/**
- * Determines the MIME type of an image buffer using file signature detection.
- *
- * @param buffer - Binary image data as a Buffer or ArrayBuffer.
- * @returns Detected MIME type, or `undefined` if unknown.
- */
-export const getImageMimeType = (
-  buffer: Buffer | ArrayBuffer,
-): "bmp" | "png" | "jpg" | "gif" | undefined => {
-  const signatureArray = new Uint8Array(buffer).slice(0, 4);
-
-  if (signatureArray[0] === 66 && signatureArray[1] === 77) return "bmp";
-
-  const signature = signatureArray.reduce(
-    (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
-    "",
-  );
-
-  switch (signature) {
-    case "89504E47":
-      return "png";
-    case "47494638":
-      return "gif";
-    case "FFD8FFE0":
-    case "FFD8FFE1":
-    case "FFD8FFE2":
-    case "FFD8FFE3":
-    case "FFD8FFE8":
-      return "jpg";
-  }
-};
 
 /**
  * Resolves a base64 image (data URL) to a `docx` image object.
@@ -211,34 +181,6 @@ const handleNonDataUrls = async (
   };
 };
 
-let placeholderImg: IImageOptions | null = null;
-let shouldEmitEmptyPlaceholder = false;
-
-/**
- * Generates and returns a placeholder image.
- * If a placeholder source is defined, attempts to resolve it; otherwise returns an empty fallback.
- *
- * @param options - Image plugin configuration.
- * @returns Image options for the placeholder.
- */
-export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) => {
-  if (!placeholderImg && options.placeholder && !shouldEmitEmptyPlaceholder) {
-    shouldEmitEmptyPlaceholder = true;
-    // skipcq: JS-0357
-    placeholderImg = await imageResolver(options.placeholder, options);
-  } else {
-    placeholderImg = {
-      type: "gif",
-      data: "",
-      transformation: {
-        width: 200,
-        height: 200,
-      },
-    };
-  }
-  return placeholderImg;
-};
-
 /**
  * Resolves an image source to a DOCX-compatible image object.
  * Supports both base64 data URLs and remote URLs.
@@ -247,11 +189,35 @@ export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) =
  * @param options - Plugin configuration.
  * @returns Resolved image options or fallback.
  */
-const imageResolver: ImageResolver = async (src, options) => {
+const defaultImageResolver: ImageResolver = async (src, options, node) => {
   try {
-    return src.startsWith("data:")
-      ? await handleDataUrls(src, options)
-      : await handleNonDataUrls(src, options);
+    const imgOptions = await (node?.type === "svg"
+      ? handleSvg(node, options)
+      : src.startsWith("data:")
+        ? handleDataUrls(src, options)
+        : handleNonDataUrls(src, options));
+    const { data } = node as Image;
+    const { width: origW, height: origH } = imgOptions.transformation;
+    let { width, height } = data ?? {};
+    if (width && !height) {
+      height = (origH * width) / origW;
+    } else if (!width && height) {
+      width = (origW * height) / origH;
+    } else if (!width && !height) {
+      height = origH;
+      width = origW;
+    }
+
+    const scale = Math.min(
+      // skipcq: JS-0339
+      (options.maxW * options.dpi) / width!,
+      // skipcq: JS-0339
+      (options.maxH * options.dpi) / height!,
+      1,
+    );
+    // @ts-expect-error -- we are mutating the immutable options.
+    imgOptions.transformation = { width: width * scale, height: height * scale };
+    return imgOptions;
   } catch (error) {
     console.error(`Error resolving image: ${src}`, error);
     return getPlaceHolderImage(options);
@@ -264,7 +230,7 @@ const imageResolver: ImageResolver = async (src, options) => {
 const defaultOptions: IDefaultImagePluginOptions = {
   scale: 3,
   fallbackImageType: "png",
-  imageResolver,
+  imageResolver: defaultImageResolver,
   // A4 page size with standard margins
   maxW: 6.3,
   maxH: 9.7,
@@ -272,49 +238,6 @@ const defaultOptions: IDefaultImagePluginOptions = {
 };
 
 const cache: Record<string, Promise<IImageOptions>> = {};
-
-/**
- * Generates and caches image data used in DOCX transformation.
- * Applies appropriate scaling and dimensions based on plugin options.
- *
- * @param node - Image or SVG node from MDAST.
- * @param url - Image source URL.
- * @param options - Plugin configuration.
- * @returns Processed image options.
- */
-const createImageData = async (
-  node: Image | SVG,
-  url: string,
-  options: IDefaultImagePluginOptions,
-) => {
-  const imgOptions =
-    node.type === "svg"
-      ? await handleSvg(node, options)
-      : await options.imageResolver(url, options);
-
-  const { data } = node as Image;
-  const { width: origW, height: origH } = imgOptions.transformation;
-  let { width, height } = data ?? {};
-  if (width && !height) {
-    height = (origH * width) / origW;
-  } else if (!width && height) {
-    width = (origW * height) / origH;
-  } else if (!width && !height) {
-    height = origH;
-    width = origW;
-  }
-
-  const scale = Math.min(
-    // skipcq: JS-0339
-    (options.maxW * options.dpi) / width!,
-    // skipcq: JS-0339
-    (options.maxH * options.dpi) / height!,
-    1,
-  );
-  // @ts-expect-error -- we are mutating the immutable options.
-  imgOptions.transformation = { width: width * scale, height: height * scale };
-  return imgOptions;
-};
 
 /**
  * Image plugin for processing inline image nodes in the Markdown AST.
@@ -347,11 +270,10 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
               const cached = await imageCache.get(cacheKey);
               if (cached) return cached;
 
-              const result = await createImageData(node as Image | SVG, url, options);
+              const result = await options.imageResolver(url, options, node as Image | SVG);
               await imageCache.set(cacheKey, result);
               return result;
             })();
-
             const alt = (node as Image).alt ?? url?.split("/")?.pop() ?? "";
 
             node.data = {
