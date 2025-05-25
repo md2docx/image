@@ -48,7 +48,8 @@
     "typescript": "^5.8.3",
     "unified": "^11.0.5",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.1.4"
+    "vitest": "^3.1.4",
+    "idb": "^8.0.3"
   },
   "dependencies": {
     "@m2d/core": "^1.0.2"

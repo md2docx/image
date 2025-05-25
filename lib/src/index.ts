@@ -12,6 +12,7 @@ import type {
 } from "@m2d/core";
 import { handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
+import { imageCache } from "./idb-utils";
 
 /**
  * List of image types directly supported by `docx`.
@@ -29,7 +30,6 @@ const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as const;
 export type ImageResolver = (
   src: string,
   options: IDefaultImagePluginOptions,
-  isPlaceholder?: boolean,
 ) => Promise<IImageOptions>;
 
 /**
@@ -37,15 +37,13 @@ export type ImageResolver = (
  */
 export interface IDefaultImagePluginOptions {
   /**
-   * Scaling factor applied to base64 images to simulate resolution.
-   *
+   * Scale factor applied to base64 images to simulate resolution.
    * @default 3
    */
   scale: number;
 
   /**
    * Fallback image format for unsupported or unrecognized types.
-   *
    * @default "png"
    */
   fallbackImageType: "png" | "jpg" | "bmp" | "gif";
@@ -66,7 +64,7 @@ export interface IDefaultImagePluginOptions {
   maxH: number;
 
   /**
-   * Placeholder Image Src
+   * Placeholder image source URL or base64.
    */
   placeholder?: string;
 
@@ -215,8 +213,13 @@ const handleNonDataUrls = async (
 
 let placeholderImg: IImageOptions | null = null;
 let shouldEmitEmptyPlaceholder = false;
+
 /**
- * Generate placeholder image
+ * Generates and returns a placeholder image.
+ * If a placeholder source is defined, attempts to resolve it; otherwise returns an empty fallback.
+ *
+ * @param options - Image plugin configuration.
+ * @returns Image options for the placeholder.
  */
 export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) => {
   if (!placeholderImg && options.placeholder && !shouldEmitEmptyPlaceholder) {
@@ -235,6 +238,7 @@ export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) =
   }
   return placeholderImg;
 };
+
 /**
  * Resolves an image source to a DOCX-compatible image object.
  * Supports both base64 data URLs and remote URLs.
@@ -270,9 +274,13 @@ const defaultOptions: IDefaultImagePluginOptions = {
 const cache: Record<string, Promise<IImageOptions>> = {};
 
 /**
- * Generate image data
+ * Generates and caches image data used in DOCX transformation.
+ * Applies appropriate scaling and dimensions based on plugin options.
  *
- * Extracting this logic in an async function for the purpose of caching the promises
+ * @param node - Image or SVG node from MDAST.
+ * @param url - Image source URL.
+ * @param options - Plugin configuration.
+ * @returns Processed image options.
  */
 const createImageData = async (
   node: Image | SVG,
@@ -284,7 +292,6 @@ const createImageData = async (
       ? await handleSvg(node, options)
       : await options.imageResolver(url, options);
 
-  // apply data props
   const { data } = node as Image;
   const { width: origW, height: origH } = imgOptions.transformation;
   let { width, height } = data ?? {};
@@ -319,7 +326,7 @@ const createImageData = async (
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
   const options = { ...defaultOptions, ...options_ };
 
-  /** preprocess images */
+  /** Preprocess images and resolve sources */
   const preprocess = async (root: Root, definitions: Definitions) => {
     const promises: Promise<void>[] = [];
 
@@ -330,15 +337,21 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
       if (/^(image|svg)/.test(node.type))
         promises.push(
           (async () => {
-            // Only process image nodes
             const url =
               (node as Image).url ??
               definitions[(node as ImageReference).identifier?.toUpperCase()];
 
-            // for SVG if the value is promise, it must have mermaid. We will in future provide better type safety after considering if there are any other mermaid like tools that we might want to support
             const cacheKey = node.type === "svg" ? (node.data?.mermaid ?? String(node.value)) : url;
 
-            cache[cacheKey] ??= createImageData(node as Image | SVG, url, options);
+            cache[cacheKey] ??= (async () => {
+              const cached = await imageCache.get(cacheKey);
+              if (cached) return cached;
+
+              const result = await createImageData(node as Image | SVG, url, options);
+              await imageCache.set(cacheKey, result);
+              return result;
+            })();
+
             const alt = (node as Image).alt ?? url?.split("/")?.pop() ?? "";
 
             node.data = {
@@ -352,6 +365,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     preprocessInternal(root);
     await Promise.all(promises);
   };
+
   return {
     preprocess,
     inline: (docx, node, runProps) => {
