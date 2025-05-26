@@ -10,23 +10,25 @@ import type {
   RootContent,
   SVG,
 } from "@m2d/core";
+
 import { handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
-import { imageCache } from "./cache-utils";
+import { createCachedImageResolver } from "./cache-utils";
 import { getImageMimeType, getPlaceHolderImage } from "./utils";
 
 /**
- * List of image types directly supported by `docx`.
- * SVG is excluded here as it requires conversion before use.
+ * List of supported image MIME types that can be embedded directly in DOCX.
+ * SVG is intentionally excluded due to its special handling.
  */
 const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as const;
 
 /**
- * A function that resolves an image source into a `docx`-compatible image options object.
+ * A resolver function that transforms an image `src` into
+ * a `docx`-compatible `IImageOptions` object.
  *
- * @param src - Image source, either a base64-encoded string or URL.
- * @param options - Plugin options used during image resolution.
- * @returns Promise resolving to image options used in DOCX generation.
+ * @param src - Base64 or URL image source.
+ * @param options - Current plugin options.
+ * @param node - Image or SVG node in the Markdown AST.
  */
 export type ImageResolver = (
   src: string,
@@ -35,60 +37,47 @@ export type ImageResolver = (
 ) => Promise<IImageOptions>;
 
 /**
- * Configuration options for the image plugin.
+ * Full configuration for the image plugin including defaulted and required options.
  */
 export interface IDefaultImagePluginOptions {
-  /**
-   * Scale factor applied to base64 images to simulate resolution.
-   * @default 3
-   */
+  /** Scale factor for base64 (data URL) images. @default 3 */
   scale: number;
 
-  /**
-   * Fallback image format for unsupported or unrecognized types.
-   * @default "png"
-   */
+  /** Fallback format to convert unsupported image types. @default "png" */
   fallbackImageType: "png" | "jpg" | "bmp" | "gif";
 
-  /**
-   * Custom function to resolve image sources into DOCX image options.
-   */
+  /** Image resolution function used to convert URL/base64/SVG to image options */
   imageResolver: ImageResolver;
 
-  /**
-   * Maximum allowed image width in inches.
-   */
+  /** Max image width (in inches) for inserted image */
   maxW: number;
 
-  /**
-   * Maximum allowed image height in inches.
-   */
+  /** Max image height (in inches) for inserted image */
   maxH: number;
 
-  /**
-   * Placeholder image source URL or base64.
-   */
+  /** Optional placeholder image (base64 or URL) used on errors */
   placeholder?: string;
 
+  /** Enable IndexedDB-based caching. @default true */
+  idb?: boolean;
+
   /**
-   * Target DPI (dots per inch) to calculate dimensions from pixels.
+   * Optional salt string used to differentiate cache keys for similar images (e.g., dark/light theme).
    */
+  salt?: string;
+
+  /** Target resolution in DPI for calculating physical dimensions */
   dpi: number;
 }
 
 /**
- * Optional configuration input for the plugin constructor.
- * The `dpi` field is managed internally and excluded.
+ * External plugin options accepted by consumers, omitting internal-only values.
  */
-type IImagePluginOptions = Optional<Omit<IDefaultImagePluginOptions, "dpi">>;
+export type IImagePluginOptions = Optional<Omit<IDefaultImagePluginOptions, "dpi">>;
 
 /**
- * Resolves a base64 image (data URL) to a `docx` image object.
- * Converts unsupported formats to a supported fallback using Canvas.
- *
- * @param src - Base64 image source.
- * @param options - Plugin configuration including scaling and fallback type.
- * @returns Image options including dimensions and data.
+ * Handles base64 data URL images. Returns image options suitable for DOCX.
+ * Converts unsupported types to canvas-based fallback.
  */
 const handleDataUrls = async (
   src: string,
@@ -121,13 +110,13 @@ const handleDataUrls = async (
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
-  /* v8 ignore start - canvas not supported in Node environments */
+  /* v8 ignore start */
   if (!ctx) throw new Error("Canvas context not available");
 
   canvas.width = width;
   canvas.height = height;
   ctx.drawImage(img, 0, 0, width, height);
-  const fallbackImageType = options?.fallbackImageType ?? "png";
+  const fallbackImageType = options.fallbackImageType ?? "png";
 
   return {
     data: canvas.toDataURL(`image/${fallbackImageType}`),
@@ -141,12 +130,8 @@ const handleDataUrls = async (
 };
 
 /**
- * Resolves an image from a URL to a `docx` image object.
- * Automatically detects SVGs and delegates to SVG handler.
- *
- * @param url - External image URL.
- * @param options - Plugin configuration.
- * @returns Image options including binary data and dimensions.
+ * Fetches and processes external image URLs.
+ * Automatically detects SVGs and delegates them to SVG handler.
  */
 const handleNonDataUrls = async (
   url: string,
@@ -182,12 +167,9 @@ const handleNonDataUrls = async (
 };
 
 /**
- * Resolves an image source to a DOCX-compatible image object.
- * Supports both base64 data URLs and remote URLs.
- *
- * @param src - Image source to resolve.
- * @param options - Plugin configuration.
- * @returns Resolved image options or fallback.
+ * The default image resolver.
+ * Detects source type and invokes the correct handler (SVG, base64, remote).
+ * Computes final dimensions while respecting maxW/maxH and DPI.
  */
 const defaultImageResolver: ImageResolver = async (src, options, node) => {
   try {
@@ -196,18 +178,22 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
       : src.startsWith("data:")
         ? handleDataUrls(src, options)
         : handleNonDataUrls(src, options));
+
     const { data } = node as Image;
     const { width: origW, height: origH } = imgOptions.transformation;
     let { width, height } = data ?? {};
+
+    // Fill in missing dimensions using aspect ratio
     if (width && !height) {
       height = (origH * width) / origW;
     } else if (!width && height) {
       width = (origW * height) / origH;
     } else if (!width && !height) {
-      height = origH;
       width = origW;
+      height = origH;
     }
 
+    // Enforce maxW/maxH constraints using DPI
     const scale = Math.min(
       // skipcq: JS-0339
       (options.maxW * options.dpi) / width!,
@@ -215,7 +201,8 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
       (options.maxH * options.dpi) / height!,
       1,
     );
-    // @ts-expect-error -- we are mutating the immutable options.
+
+    // @ts-expect-error -- mutating transformation
     imgOptions.transformation = { width: width * scale, height: height * scale };
     return imgOptions;
   } catch (error) {
@@ -225,74 +212,62 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
 };
 
 /**
- * Default configuration values used when plugin options are not provided.
+ * Default fallback plugin configuration.
+ * `imageResolver` is wrapped in a persistent cache to avoid redundant work.
  */
 const defaultOptions: IDefaultImagePluginOptions = {
   scale: 3,
   fallbackImageType: "png",
-  imageResolver: defaultImageResolver,
-  // A4 page size with standard margins
+  imageResolver: createCachedImageResolver(defaultImageResolver),
   maxW: 6.3,
   maxH: 9.7,
   dpi: 96,
 };
 
-const cache: Record<string, Promise<IImageOptions>> = {};
-
 /**
- * Image plugin for processing inline image nodes in the Markdown AST.
- * Resolves both base64 and URL-based images for inclusion in DOCX.
- *
- * @param options - Optional image plugin configuration.
- * @returns Plugin implementation for use in the `@m2d/core` pipeline.
+ * Image plugin for `@m2d/core`.
+ * Resolves all inline images (base64, SVG, URL) for DOCX generation.
  */
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
   const options = { ...defaultOptions, ...options_ };
 
-  /** Preprocess images and resolve sources */
+  /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
     const promises: Promise<void>[] = [];
 
-    /** process images and create promises - use max parallel processing */
     const preprocessInternal = (node: Root | RootContent | PhrasingContent) => {
       (node as Parent).children?.forEach(preprocessInternal);
 
-      if (/^(image|svg)/.test(node.type))
+      if (/^(image|svg)/.test(node.type)) {
         promises.push(
           (async () => {
-            const url =
+            const src =
               (node as Image).url ??
               definitions[(node as ImageReference).identifier?.toUpperCase()];
 
-            const cacheKey = node.type === "svg" ? (node.data?.mermaid ?? String(node.value)) : url;
-
-            cache[cacheKey] ??= (async () => {
-              const cached = await imageCache.get(cacheKey);
-              if (cached) return cached;
-
-              const result = await options.imageResolver(url, options, node as Image | SVG);
-              await imageCache.set(cacheKey, result);
-              return result;
-            })();
-            const alt = (node as Image).alt ?? url?.split("/")?.pop() ?? "";
+            const alt = (node as Image).alt ?? src?.split("/")?.pop() ?? "";
 
             node.data = {
-              ...(await cache[cacheKey]),
+              ...(await options.imageResolver(src, options, node as Image | SVG)),
               altText: { description: alt, name: alt, title: alt },
               ...(node as Image | SVG).data,
             };
           })(),
         );
+      }
     };
+
     preprocessInternal(root);
     await Promise.all(promises);
   };
 
   return {
     preprocess,
+
+    /** Renderer step: injects resolved image data into the final DOCX AST */
     inline: (docx, node, runProps) => {
       if (/^(image|svg)/.test(node.type)) {
-        // @ts-expect-error -- adding extra props
+        // @ts-expect-error -- extra props used for ImageRun
         return [new docx.ImageRun({ ...(node as Image).data, ...runProps })];
       }
       return [];
