@@ -59,7 +59,7 @@ export interface IDefaultImagePluginOptions {
   placeholder?: string;
 
   /** Enable IndexedDB-based caching. @default true */
-  idb?: boolean;
+  idb: boolean;
 
   /**
    * Optional salt string used to differentiate cache keys for similar images (e.g., dark/light theme).
@@ -221,10 +221,11 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
 const defaultOptions: IDefaultImagePluginOptions = {
   scale: 3,
   fallbackImageType: "png",
-  imageResolver: createCachedImageResolver(defaultImageResolver),
+  imageResolver: defaultImageResolver,
   maxW: 6.3,
   maxH: 9.7,
   dpi: 96,
+  idb: true,
 };
 
 /**
@@ -233,6 +234,8 @@ const defaultOptions: IDefaultImagePluginOptions = {
  */
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
   const options = { ...defaultOptions, ...options_ };
+
+  if (options.idb) options.imageResolver = createCachedImageResolver(options.imageResolver);
 
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
