@@ -14,10 +14,9 @@ export const getImageMimeType = (
 
   if (signatureArray[0] === 66 && signatureArray[1] === 77) return "bmp";
 
-  const signature = signatureArray.reduce(
-    (acc, byte) => acc + byte.toString(16).padStart(2, "0"),
-    "",
-  );
+  const signature = signatureArray
+    .reduce((acc, byte) => acc + byte.toString(16).padStart(2, "0"), "")
+    .toUpperCase();
 
   switch (signature) {
     case "89504E47":

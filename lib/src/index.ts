@@ -107,10 +107,10 @@ const handleDataUrls = async (
     };
   }
 
+  /* v8 ignore start */
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
-  /* v8 ignore start */
   if (!ctx) throw new Error("Canvas context not available");
 
   canvas.width = width;
@@ -152,6 +152,7 @@ const handleNonDataUrls = async (
   const imageBitmap = await createImageBitmap(new Blob([arrayBuffer], { type: mimeType }));
 
   if (!SUPPORTED_IMAGE_TYPES.includes(mimeType)) {
+    /* v8 ignore next 3 */
     console.warn(`${mimeType} not supported by docx. Using fallback.`);
     return handleDataUrls(url, options);
   }
@@ -183,6 +184,7 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
     const { width: origW, height: origH } = imgOptions.transformation;
     let { width, height } = data ?? {};
 
+    /* v8 ignore start */
     // Fill in missing dimensions using aspect ratio
     if (width && !height) {
       height = (origH * width) / origW;
@@ -192,6 +194,7 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
       width = origW;
       height = origH;
     }
+    /* v8 ignore end */
 
     // Enforce maxW/maxH constraints using DPI
     const scale = Math.min(

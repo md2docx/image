@@ -12,6 +12,7 @@ const DB_VERSION = 1;
 /** IndexedDB object store name for storing image render results */
 const STORE_NAME = "images";
 
+/* v8 ignore start - indexDB not available in test env */
 /**
  * Opens the IndexedDB database and creates the object store if it doesn't exist.
  * This promise is reused across the module to avoid reopening the DB multiple times.
@@ -75,6 +76,8 @@ export const cacheImage = (id: string, value: IImageOptions): Promise<void> =>
     .catch(err => {
       console.warn("[m2d:image-cache]", err);
     });
+
+/* v8 ignore end */
 
 /**
  * Stable stringify implementation to create consistent, deterministic string
