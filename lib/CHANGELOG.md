@@ -1,5 +1,36 @@
 # @m2d/image
 
+## 1.1.0
+
+### Minor Changes
+
+- c0ccdda: Rewrite image resolver to handle svg as well - prelude for cutom caching
+- 3c2a0d7: Add IndexedDB image caching
+
+  - Implement persistent image caching using IndexedDB
+  - Add idb dependency for IndexedDB operations
+  - Create cache get/set/clear operations
+  - Integrate with image resolution pipeline
+  - Improve performance for repeated image rendering
+
+- 47c16c5: Enhanced image caching system with improved performance and reliability:
+  - Replaced basic IndexedDB utilities with comprehensive caching system
+  - Added deterministic hash-based cache keys using xxhash-wasm
+  - Implemented in-memory cache to deduplicate parallel requests
+  - Added salt option for cache key differentiation
+  - Improved documentation with JSDoc comments
+- a31621c: Make IndexedDB caching truly optional:
+
+  - Only apply caching wrapper when idb option is enabled
+  - Set default idb value to true for backward compatibility
+
+### Patch Changes
+
+- 3add133: Remove idb dependency and implement native IndexedDB API:
+  - Replace idb library with native IndexedDB API to reduce bundle size
+  - Fix SSR compatibility issues with Next.js
+  - Improve object store configuration with keyPath for better data structure
+
 ## 1.0.1
 
 ### Patch Changes

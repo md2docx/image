@@ -1,8 +1,9 @@
 // svg-utils.ts
 
 import type { IImageOptions } from "docx";
-import { getPlaceHolderImage, IDefaultImagePluginOptions } from ".";
+import { IDefaultImagePluginOptions } from ".";
 import { SVG } from "@m2d/core";
+import { getPlaceHolderImage } from "./utils";
 
 /**
  * Converts a raw SVG string into a base64-encoded data URL.
