@@ -70,7 +70,7 @@ export const cacheImage = (id: string, value: IImageOptions): Promise<void> =>
 
       return new Promise<void>((resolve, reject) => {
         tx.oncomplete = () => resolve();
-        tx.onerror = () => reject();
+        tx.onerror = err => reject(err);
       });
     })
     .catch(err => {
