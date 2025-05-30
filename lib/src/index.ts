@@ -10,10 +10,9 @@ import type {
   RootContent,
   SVG,
 } from "@m2d/core";
-
+import { createPersistentCache, simpleCleanup } from "@m2d/core/cache";
 import { handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
-import { createCachedImageResolver } from "./cache-utils";
 import { getImageMimeType, getPlaceHolderImage } from "./utils";
 
 /**
@@ -21,6 +20,9 @@ import { getImageMimeType, getPlaceHolderImage } from "./utils";
  * SVG is intentionally excluded due to its special handling.
  */
 const SUPPORTED_IMAGE_TYPES = ["jpeg", "jpg", "bmp", "gif", "png"] as const;
+
+/** namespace used for cleaning up the idb cache */
+const NAMESPACE = "img";
 
 /**
  * A resolver function that transforms an image `src` into
@@ -235,7 +237,12 @@ const defaultOptions: IDefaultImagePluginOptions = {
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
   const options = { ...defaultOptions, ...options_ };
 
-  if (options.idb) options.imageResolver = createCachedImageResolver(options.imageResolver);
+  options.imageResolver = createPersistentCache(
+    options.imageResolver,
+    NAMESPACE,
+    ["dpi", "idb", "type", "alt"],
+    options.idb,
+  );
 
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
@@ -265,6 +272,8 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
 
     preprocessInternal(root);
     await Promise.all(promises);
+    /** clean up images data which is not used for last 7 days */
+    simpleCleanup(7 * 24 * 60, NAMESPACE);
   };
 
   return {

@@ -18,7 +18,7 @@ export default defineConfig(
         raw({ textExtensions: ["md"] }),
         react18Plugin(),
         cssPlugin({ generateScopedName: "[folder]__[local]" }),
-        rdiPlugin(),
+        // rdiPlugin(), <-- todo: rdiPlugin sometimes breaks the build when building all packages parallel
       ],
       external: ["react"],
       ...options,
