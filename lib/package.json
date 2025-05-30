@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@m2d/html": "^1.0.3",
-    "@m2d/mermaid": "^1.0.1",
+    "@m2d/mermaid": "^1.1.2",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/jsdom": "^21.1.7",
@@ -52,7 +52,7 @@
     "xxhash-wasm": "^1.1.0"
   },
   "dependencies": {
-    "@m2d/core": "^1.1.1"
+    "@m2d/core": "^1.1.6"
   },
   "peerDependencies": {
     "docx": "^9.3.0"

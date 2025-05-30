@@ -152,6 +152,14 @@ vi.mock("@m2d/mermaid", () => {
   };
 });
 
+vi.mock("@mermaid/core/dist/utils/cache", () => {
+  return {
+    __esModule: true,
+    createPersistentCache: (mermaidProcessor: Function) => mermaidProcessor,
+    simpleCleanup: () => null,
+  };
+});
+
 (SVGElement.prototype as any).getComputedTextLength = () => 100; // or any fixed number
 
 (HTMLCanvasElement.prototype as any).getContext = vi.fn(() => {

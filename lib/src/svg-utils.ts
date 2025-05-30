@@ -89,14 +89,21 @@ export const handleSvg = async (
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
   const value = svgNode.value;
-  const svg = typeof value === "string" ? value : (await value).svg;
+  let svg;
+  let isGantt = false;
+  if (typeof value === "string") {
+    svg = value;
+  } else {
+    const renderedData = await value;
+    if (!renderedData) return getPlaceHolderImage(options);
+    svg = renderedData.svg;
+    isGantt = renderedData.diagramType === "gantt";
+  }
   try {
     const img = new Image();
     const container = getContainer(options);
     container.appendChild(img);
-    // @ts-expect-error -- extra data
-    const isGantt = /^\s*gantt\s*/.test(svgNode.data?.mermaid);
-    const croppedSvg = isGantt ? { svg, scale: 1 } : await tightlyCropSvg(svg, container);
+    const croppedSvg = isGantt || !svg ? { svg, scale: 1 } : await tightlyCropSvg(svg, container);
 
     const svgDataURL = await svgToBase64(croppedSvg.svg);
     img.src = svgDataURL;

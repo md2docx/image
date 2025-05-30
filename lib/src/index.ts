@@ -70,6 +70,9 @@ export interface IDefaultImagePluginOptions {
 
   /** Target resolution in DPI for calculating physical dimensions */
   dpi: number;
+
+  /** Duration in minutes after which cached records are removed as stale. Default: 7 days (10080 minutes). */
+  maxAgeMinutes: number;
 }
 
 /**
@@ -140,7 +143,7 @@ const handleNonDataUrls = async (
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
   const response = await fetch(
-    url.startsWith("http") ? url : `${window.location.origin}/${url.replace(/^\/+/, "")}`,
+    url.startsWith("http") ? url : `${window.location.origin}/${url.replace(/^\/+/, "/")}`,
   );
 
   if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
@@ -228,6 +231,7 @@ const defaultOptions: IDefaultImagePluginOptions = {
   maxH: 9.7,
   dpi: 96,
   idb: true,
+  maxAgeMinutes: 7 * 24 * 60,
 };
 
 /**
@@ -244,6 +248,8 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     options.idb,
   );
 
+  /** clean up images data which is not used for last 7 days */
+  simpleCleanup(options.maxAgeMinutes, NAMESPACE);
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
     const promises: Promise<void>[] = [];
@@ -272,8 +278,6 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
 
     preprocessInternal(root);
     await Promise.all(promises);
-    /** clean up images data which is not used for last 7 days */
-    simpleCleanup(7 * 24 * 60, NAMESPACE);
   };
 
   return {
@@ -282,6 +286,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     /** Renderer step: injects resolved image data into the final DOCX AST */
     inline: (docx, node, runProps) => {
       if (/^(image|svg)/.test(node.type)) {
+        node.type = "";
         // @ts-expect-error -- extra props used for ImageRun
         return [new docx.ImageRun({ ...(node as Image).data, ...runProps })];
       }
