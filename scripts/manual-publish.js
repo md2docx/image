@@ -80,6 +80,8 @@ if (isNotPatch && BRANCH === DEFAULT_BRANCH) {
   }
 }
 
+execSync("cp lib/CHANGELOG.md CHANGELOG.md");
+
 const { visibility } = JSON.parse(execSync("gh repo view --json visibility").toString());
 const provenance = visibility.toLowerCase() === "public" ? "--provenance" : "";
 
