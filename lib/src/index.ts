@@ -142,9 +142,7 @@ const handleNonDataUrls = async (
   url: string,
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
-  const response = await fetch(
-    url.startsWith("http") ? url : `${window.location.origin}/${url.replace(/^\/+/, "/")}`,
-  );
+  const response = await fetch(url);
 
   if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
     const svgText = await response.text();
@@ -185,9 +183,8 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
         ? handleDataUrls(src, options)
         : handleNonDataUrls(src, options));
 
-    const { data } = node as Image;
     const { width: origW, height: origH } = imgOptions.transformation;
-    let { width, height } = data ?? {};
+    let { width, height } = (node as Image)?.data ?? {};
 
     /* v8 ignore start */
     // Fill in missing dimensions using aspect ratio
