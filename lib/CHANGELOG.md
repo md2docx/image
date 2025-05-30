@@ -1,5 +1,14 @@
 # @m2d/image
 
+## 1.1.1
+
+### Patch Changes
+
+- d260e28: Update mermaid plugin to use the diagramType infered by the mermaid library itself.
+- 0998cd8: refactor: simplify URL handling in image resolver and update TypeScript target to ES2021
+- acef6ad: fix the placeholder typo
+- 42c9527: Use shared caching mechanism from @m2d/core
+
 ## 1.1.0
 
 ### Minor Changes
