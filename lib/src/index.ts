@@ -245,8 +245,6 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     options.idb,
   );
 
-  /** clean up images data which is not used for last 7 days */
-  simpleCleanup(options.maxAgeMinutes, NAMESPACE);
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
     const promises: Promise<void>[] = [];
@@ -277,6 +275,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     await Promise.all(promises);
   };
 
+  let cleanupDone = false;
   return {
     preprocess,
 
@@ -288,6 +287,13 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
         return [new docx.ImageRun({ ...(node as Image).data, ...runProps })];
       }
       return [];
+    },
+    /** clean up IndexedDB once the document is packed */
+    postprocess: () => {
+      if ((options?.idb ?? true) && !cleanupDone) {
+        cleanupDone = true;
+        simpleCleanup(options.maxAgeMinutes, NAMESPACE);
+      }
     },
   };
 };
