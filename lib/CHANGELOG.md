@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.1.2
+
+### Patch Changes
+
+- cb672c4: Update readme
+
 ## 1.1.1
 
 ### Patch Changes
