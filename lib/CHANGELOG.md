@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.2.0
+
+### Minor Changes
+
+- c0f8772: Add configurable SVG rendering fixes to improve diagram rendering, particularly for Mermaid pie charts. Extract SVG fixes into a separate exportable function that can be customized through plugin options.
+
 ## 1.1.3
 
 ### Patch Changes
