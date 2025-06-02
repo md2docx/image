@@ -11,7 +11,7 @@ import type {
   SVG,
 } from "@m2d/core";
 import { createPersistentCache, simpleCleanup } from "@m2d/core/cache";
-import { handleSvg } from "./svg-utils";
+import { fixGeneratedSvg, handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
 import { getImageMimeType, getPlaceHolderImage } from "./utils";
 
@@ -73,6 +73,16 @@ export interface IDefaultImagePluginOptions {
 
   /** Duration in minutes after which cached records are removed as stale. Default: 7 days (10080 minutes). */
   maxAgeMinutes: number;
+
+  /**
+   * Applies generic fixes to known SVG rendering issues (e.g., Mermaid pie chart title alignment).
+   * Designed to be overridden to handle tool-specific quirks in generated SVGs.
+   *
+   * @param svg - Raw SVG string to transform.
+   * @param metadata - Optional metadata such as diagram type or render info.
+   * @returns Modified SVG string.
+   */
+  fixGeneratedSvg: (svg: string, metadata: any) => string;
 }
 
 /**
@@ -229,6 +239,7 @@ const defaultOptions: IDefaultImagePluginOptions = {
   dpi: 96,
   idb: true,
   maxAgeMinutes: 7 * 24 * 60,
+  fixGeneratedSvg,
 };
 
 /**

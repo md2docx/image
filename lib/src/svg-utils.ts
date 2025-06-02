@@ -82,6 +82,23 @@ const getContainer = (options: IDefaultImagePluginOptions) => {
 };
 
 /**
+ * Applies generic fixes to known SVG rendering issues (e.g., Mermaid pie chart title alignment).
+ * Designed to be overridden to handle tool-specific quirks in generated SVGs.
+ *
+ * @param svg - Raw SVG string to transform.
+ * @returns Modified SVG string.
+ */
+export const fixGeneratedSvg = (svg: string, metadata: { diagramType: string }): string => {
+  return metadata.diagramType === "pie"
+    ? svg
+        .replace(".pieTitleText{text-anchor:middle;", ".pieTitleText{")
+        .replace(/<text[^>]*class="pieTitleText"[^>]*>(.*?)<\/text>/, (match, m1) => {
+          return match.replace(m1, m1.replace(/^"|"$/g, "")).replace(/ x=".*?"/, ' x="-20%"');
+        })
+    : svg;
+};
+
+/**
  * Converts SVG into fallback raster image (PNG/JPG/etc.) for DOCX insertion.
  */
 export const handleSvg = async (
@@ -97,19 +114,8 @@ export const handleSvg = async (
     const renderedData = await value;
     if (!renderedData) return getPlaceHolderImage(options);
     svg = renderedData.svg;
-    const { diagramType } = renderedData;
-    isGantt = diagramType === "gantt";
-    if (diagramType === "pie") {
-      // remove text-anchor:middle; to ensure title is not cut on the left side
-      svg = svg.replace(".pieTitleText{text-anchor:middle;", ".pieTitleText{");
-
-      // todo: create strategy to split the title
-      // .replace(/<text .*?class="pieTitleText".*?>(.*?)<\/text>/, (match, m1) => {
-      //   const r = match.replace(m1, m1.split(" ").join("--"));
-      //   console.log({ match, m1, r });
-      //   return r;
-      // });
-    }
+    isGantt = renderedData.diagramType === "gantt";
+    svg = options.fixGeneratedSvg(svg, renderedData);
   }
   try {
     const img = new Image();
