@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.1.3
+
+### Patch Changes
+
+- d02c5b4: fix: Mermaid title alignment in pie chart
+
 ## 1.1.2
 
 ### Patch Changes
