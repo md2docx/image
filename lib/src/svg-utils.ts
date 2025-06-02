@@ -97,7 +97,19 @@ export const handleSvg = async (
     const renderedData = await value;
     if (!renderedData) return getPlaceHolderImage(options);
     svg = renderedData.svg;
-    isGantt = renderedData.diagramType === "gantt";
+    const { diagramType } = renderedData;
+    isGantt = diagramType === "gantt";
+    if (diagramType === "pie") {
+      // remove text-anchor:middle; to ensure title is not cut on the left side
+      svg = svg.replace(".pieTitleText{text-anchor:middle;", ".pieTitleText{");
+
+      // todo: create strategy to split the title
+      // .replace(/<text .*?class="pieTitleText".*?>(.*?)<\/text>/, (match, m1) => {
+      //   const r = match.replace(m1, m1.split(" ").join("--"));
+      //   console.log({ match, m1, r });
+      //   return r;
+      // });
+    }
   }
   try {
     const img = new Image();
