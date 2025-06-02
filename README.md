@@ -104,6 +104,16 @@ IImagePluginOptions {
 
   /** Duration in minutes after which cached records are removed as stale. Default: 7 days (10080 minutes). */
   maxAgeMinutes?: number;
+
+  /**
+   * Applies generic fixes to known SVG rendering issues (e.g., Mermaid pie chart title alignment).
+   * Designed to be overridden to handle tool-specific quirks in generated SVGs.
+   *
+   * @param svg - Raw SVG string to transform.
+   * @param metadata - Optional metadata such as diagram type or render info.
+   * @returns Modified SVG string.
+   */
+  fixGeneratedSvg?: (svg: string, metadata: any) => string;
 }
 ```
 
