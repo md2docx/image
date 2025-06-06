@@ -1,5 +1,6 @@
 import type { IImageOptions } from "docx";
 import type {
+  EmptyNode,
   Image,
   ImageReference,
   IPlugin,
@@ -276,6 +277,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
               ...(await options.imageResolver(src, options, node as Image | SVG)),
               altText: { description: alt, name: alt, title: alt },
               ...(node as Image | SVG).data,
+              tag: "img",
             };
           })(),
         );
@@ -293,6 +295,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     /** Renderer step: injects resolved image data into the final DOCX AST */
     inline: (docx, node, runProps) => {
       if (/^(image|svg)/.test(node.type)) {
+        (node as EmptyNode)._type = node.type;
         node.type = "";
         // @ts-expect-error -- extra props used for ImageRun
         return [new docx.ImageRun({ ...(node as Image).data, ...runProps })];
