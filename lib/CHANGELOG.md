@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.2.1
+
+### Patch Changes
+
+- 4764975: Store type in \_type for conversion to JSX
+
 ## 1.2.0
 
 ### Minor Changes
