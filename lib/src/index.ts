@@ -277,7 +277,6 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
               ...(await options.imageResolver(src, options, node as Image | SVG)),
               altText: { description: alt, name: alt, title: alt },
               ...(node as Image | SVG).data,
-              tag: "img",
             };
           })(),
         );
