@@ -61,6 +61,11 @@ export interface IDefaultImagePluginOptions {
   /** Optional placeholder image (base64 or URL) used on errors */
   placeholder?: string;
 
+  /**
+   * In-memory cache object, useful for cache sharing across plugins/tabs.
+   */
+  cache?: Record<string, Promise<unknown>>;
+
   /** Configure caching */
   cacheConfig?: CacheConfigType<IImageOptions>;
 
@@ -255,6 +260,7 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
   const options = { ...defaultOptions, ...options_ };
 
   const cacheConfig = {
+    cache: options.cache ?? undefined,
     ...defaultOptions.cacheConfig,
     ...options.cacheConfig,
     ignoreKeys: [
