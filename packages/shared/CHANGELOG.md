@@ -1,5 +1,12 @@
 # @repo/shared
 
+## 0.0.18
+
+### Patch Changes
+
+- Updated dependencies [c2945bc]
+  - @m2d/image@1.3.0
+
 ## 0.0.17
 
 ### Patch Changes
