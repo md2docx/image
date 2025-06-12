@@ -138,7 +138,7 @@ imagePlugin({
 });
 ```
 
-> You don’t need to implement caching — it’s handled internally with persistent storage.
+> You don’t need to implement caching — it’s handled internally with persistent storage. And it is configurable!
 
 ---
 
