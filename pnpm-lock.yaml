@@ -49,8 +49,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       mdast2docx:
-        specifier: 1.2.0
-        version: 1.2.0(remark-math@6.0.0)
+        specifier: 1.3.0
+        version: 1.3.0(remark-math@6.0.0)
       next:
         specifier: ^15.3.3
         version: 15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2)
@@ -68,7 +68,7 @@ importers:
         version: 19.1.0(react@19.1.0)
       react18-loaders:
         specifier: ^1.1.4
-        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
+        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
       remark-frontmatter:
         specifier: ^5.0.0
         version: 5.0.0
@@ -138,7 +138,7 @@ importers:
         version: 0.0.5(@types/react@19.1.8)(react@19.1.0)
       react18-loaders:
         specifier: ^1.1.4
-        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
+        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
       react18-themes:
         specifier: ^3.2.0
         version: 3.2.0(@types/react@19.1.8)(next@15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
@@ -175,8 +175,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(docx@9.5.0)
       '@m2d/mermaid':
-        specifier: ^1.1.5
-        version: 1.1.5(docx@9.5.0)
+        specifier: ^1.2.2
+        version: 1.2.2(docx@9.5.0)
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../packages/eslint-config
@@ -282,8 +282,8 @@ importers:
         specifier: workspace:*
         version: link:../../lib
       '@m2d/mermaid':
-        specifier: ^1.1.5
-        version: 1.1.5(docx@9.5.0)
+        specifier: ^1.2.2
+        version: 1.2.2(docx@9.5.0)
       '@mayank1513/fork-me':
         specifier: ^2.1.3
         version: 2.1.3(@types/react@19.1.8)(next@15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
@@ -294,8 +294,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       mdast2docx:
-        specifier: 1.2.0
-        version: 1.2.0(remark-math@6.0.0)
+        specifier: 1.3.0
+        version: 1.3.0(remark-math@6.0.0)
       nextjs-darkmode:
         specifier: ^1.0.10
         version: 1.0.10(@types/react@19.1.8)(react@19.1.0)
@@ -310,7 +310,7 @@ importers:
         version: 4.1.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react18-loaders:
         specifier: ^1.1.4
-        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
+        version: 1.1.4(@types/react@19.1.8)(next@15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)
       remark-parse:
         specifier: ^11.0.0
         version: 11.0.0
@@ -968,13 +968,13 @@ packages:
     peerDependencies:
       docx: ^9.3.0
 
-  '@m2d/image@1.2.1':
-    resolution: {integrity: sha512-k/CEn5DK4vUoCRq4flQ9HpNTFXT64TQCEwn7PYJFpOFGs2M6M/LoGUnIX/Xld2LxCjCVQjNjm5fgHwtlBusBUA==}
+  '@m2d/image@1.3.1':
+    resolution: {integrity: sha512-oXmXgzP3+bq8d8Vcdn7Ry4rmQNsbvmbwcCsDrv2WY0QPyC07/PdG5KCpPl3xLqmVniHwr7NNSpGwIt+1DWeJpg==}
     peerDependencies:
       docx: ^9.3.0
 
-  '@m2d/list@0.0.7':
-    resolution: {integrity: sha512-3a75So7pwhyu6Oz2Kh0iDiTuHwk+I+Y4x81coFtxG94nB++KGtcOJuzOJco/Ko3yMyho6itN2mw5vHydXcHW5A==}
+  '@m2d/list@0.0.8':
+    resolution: {integrity: sha512-5UCRxA2sd45O86ipaITMixWAThJtwdvE2xnL7kPZ6tgfH217uK3q3jm2kuFoiFDe58yf3TPj5NtWpwZ6byx/FQ==}
     peerDependencies:
       docx: ^9.3.0
 
@@ -989,8 +989,8 @@ packages:
     peerDependencies:
       docx: ^9.3.0
 
-  '@m2d/mermaid@1.1.5':
-    resolution: {integrity: sha512-yt5NGfk0r0Kaw0p3VS69e7dozrDmf1B7f0hyupV4XeFM4XOkDc4eseQ4gBbRf4JpqITkldlzB6vXeMRRXInhXw==}
+  '@m2d/mermaid@1.2.2':
+    resolution: {integrity: sha512-UEz1BSJOp6i23UzME7yh5si/ndiMvuBvt3QLjOPj8ZGFfU6hf0/GdDi3SWl9pc9h0jvhzA/kXq03Tc1b2lKxnA==}
     peerDependencies:
       docx: ^9.3.0
 
@@ -2932,8 +2932,8 @@ packages:
   mdast-util-to-string@4.0.0:
     resolution: {integrity: sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg==}
 
-  mdast2docx@1.2.0:
-    resolution: {integrity: sha512-TmZ0bZeDaf1tuL5pnJiSRzxW8tRMdH8dt4uMNHH+HplpEMn09m4c9GNhapTF75CEwGpcMB+guQlHqfgoxEywOg==}
+  mdast2docx@1.3.0:
+    resolution: {integrity: sha512-7wPu/5vDwcEi8VbaV2ql5r5BvBcxDCxqaeIzUXlwcpksF0i3cOTduFPd/lgdpcKB34HJtV6B9KwxGpghnPhMyQ==}
 
   mdn-data@2.12.2:
     resolution: {integrity: sha512-IEn+pegP1aManZuckezWCO+XZQDplx1366JoVhTpMpBB1sPey/SbveZQUosKiKiGYjg1wH4pMlNgXbCiYgihQA==}
@@ -4845,12 +4845,12 @@ snapshots:
       '@m2d/core': 1.4.1(docx@9.5.0)
       docx: 9.5.0
 
-  '@m2d/image@1.2.1(docx@9.5.0)':
+  '@m2d/image@1.3.1(docx@9.5.0)':
     dependencies:
       '@m2d/core': 1.4.1(docx@9.5.0)
       docx: 9.5.0
 
-  '@m2d/list@0.0.7(docx@9.5.0)':
+  '@m2d/list@0.0.8(docx@9.5.0)':
     dependencies:
       '@m2d/core': 1.4.1(docx@9.5.0)
       docx: 9.5.0
@@ -4866,7 +4866,7 @@ snapshots:
     dependencies:
       docx: 9.5.0
 
-  '@m2d/mermaid@1.1.5(docx@9.5.0)':
+  '@m2d/mermaid@1.2.2(docx@9.5.0)':
     dependencies:
       '@m2d/core': 1.4.1(docx@9.5.0)
       docx: 9.5.0
@@ -7092,15 +7092,15 @@ snapshots:
     dependencies:
       '@types/mdast': 4.0.4
 
-  mdast2docx@1.2.0(remark-math@6.0.0):
+  mdast2docx@1.3.0(remark-math@6.0.0):
     dependencies:
       '@m2d/core': 1.4.1(docx@9.5.0)
       '@m2d/emoji': 0.1.3(docx@9.5.0)
       '@m2d/html': 1.1.2(docx@9.5.0)
-      '@m2d/image': 1.2.1(docx@9.5.0)
-      '@m2d/list': 0.0.7(docx@9.5.0)
+      '@m2d/image': 1.3.1(docx@9.5.0)
+      '@m2d/list': 0.0.8(docx@9.5.0)
       '@m2d/math': 0.0.5(docx@9.5.0)(remark-math@6.0.0)
-      '@m2d/mermaid': 1.1.5(docx@9.5.0)
+      '@m2d/mermaid': 1.2.2(docx@9.5.0)
       '@m2d/table': 0.0.6(docx@9.5.0)
       docx: 9.5.0
     transitivePeerDependencies:
@@ -7724,7 +7724,7 @@ snapshots:
 
   react-refresh@0.17.0: {}
 
-  react18-loaders@1.1.4(@types/react@19.1.8)(next@15.3.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0):
+  react18-loaders@1.1.4(@types/react@19.1.8)(next@15.3.3(@babel/core@7.27.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0):
     dependencies:
       '@types/react': 19.1.8
       r18gs: 2.1.0(@types/react@19.1.8)(react@19.1.0)
