@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.3.1
+
+### Patch Changes
+
+- 6c56799: provide cache field to avoid entire cacheConfig option for simple cache sharing optimizations.
+
 ## 1.3.0
 
 ### Minor Changes
