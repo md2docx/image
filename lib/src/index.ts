@@ -11,7 +11,7 @@ import type {
   RootContent,
   SVG,
 } from "@m2d/core";
-import { createPersistentCache, simpleCleanup } from "@m2d/core/cache";
+import { createPersistentCache, simpleCleanup, type CacheConfigType } from "@m2d/core/cache";
 import { fixGeneratedSvg, handleSvg } from "./svg-utils";
 import { Definitions } from "@m2d/core/utils";
 import { getImageMimeType, getPlaceHolderImage } from "./utils";
@@ -61,8 +61,8 @@ export interface IDefaultImagePluginOptions {
   /** Optional placeholder image (base64 or URL) used on errors */
   placeholder?: string;
 
-  /** Enable IndexedDB-based caching. @default true */
-  idb: boolean;
+  /** Configure caching */
+  cacheConfig?: CacheConfigType<IImageOptions>;
 
   /**
    * Optional salt string used to differentiate cache keys for similar images (e.g., dark/light theme).
@@ -238,7 +238,11 @@ const defaultOptions: IDefaultImagePluginOptions = {
   maxW: 6.3,
   maxH: 9.7,
   dpi: 96,
-  idb: true,
+  cacheConfig: {
+    cacheMode: "both",
+    ignoreKeys: ["dpi", "cacheConfig", "type", "alt"],
+    parallel: true,
+  },
   maxAgeMinutes: 7 * 24 * 60,
   fixGeneratedSvg,
 };
@@ -250,12 +254,16 @@ const defaultOptions: IDefaultImagePluginOptions = {
 export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
   const options = { ...defaultOptions, ...options_ };
 
-  options.imageResolver = createPersistentCache(
-    options.imageResolver,
-    NAMESPACE,
-    ["dpi", "idb", "type", "alt"],
-    options.idb,
-  );
+  const cacheConfig = {
+    ...defaultOptions.cacheConfig,
+    ...options.cacheConfig,
+    ignoreKeys: [
+      ...(defaultOptions.cacheConfig?.ignoreKeys ?? []),
+      ...(options.cacheConfig?.ignoreKeys ?? []),
+    ],
+  } as CacheConfigType<IImageOptions>;
+
+  options.imageResolver = createPersistentCache(options.imageResolver, NAMESPACE, cacheConfig);
 
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
@@ -303,7 +311,10 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     },
     /** clean up IndexedDB once the document is packed */
     postprocess: () => {
-      if ((options?.idb ?? true) && !cleanupDone) {
+      if (
+        (options?.cacheConfig?.cacheMode ? options?.cacheConfig?.cacheMode !== "memory" : true) &&
+        !cleanupDone
+      ) {
         cleanupDone = true;
         simpleCleanup(options.maxAgeMinutes, NAMESPACE);
       }
