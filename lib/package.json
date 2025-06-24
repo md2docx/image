@@ -52,7 +52,7 @@
     "xxhash-wasm": "^1.1.0"
   },
   "dependencies": {
-    "@m2d/core": "^1.4.2"
+    "@m2d/core": "^1.4.3"
   },
   "peerDependencies": {
     "docx": "^9.3.0"
