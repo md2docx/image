@@ -32,7 +32,7 @@
     "test": "vitest run --coverage"
   },
   "devDependencies": {
-    "@m2d/html": "^1.1.8",
+    "@m2d/html": "^1.1.9",
     "@m2d/mermaid": "^1.2.2",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
