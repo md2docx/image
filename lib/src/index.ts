@@ -47,7 +47,7 @@ export interface IDefaultImagePluginOptions {
   scale: number;
 
   /** Fallback format to convert unsupported image types. @default "png" */
-  fallbackImageType: "png" | "jpg" | "bmp" | "gif";
+  fallbackImageType: "png" | "jpg";
 
   /** Image resolution function used to convert URL/base64/SVG to image options */
   imageResolver: ImageResolver;
@@ -140,7 +140,7 @@ const handleDataUrls = async (
   const fallbackImageType = options.fallbackImageType ?? "png";
 
   return {
-    data: canvas.toDataURL(`image/${fallbackImageType}`),
+    data: canvas.toDataURL(`image/${fallbackImageType === "jpg" ? "jpeg" : fallbackImageType}`),
     type: fallbackImageType,
     transformation: {
       width: width / scaleFactor,

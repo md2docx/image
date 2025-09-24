@@ -148,7 +148,9 @@ export const handleSvg = async (
     canvas.height = height;
     ctx.drawImage(img, 0, 0, width, height);
 
-    const data = canvas.toDataURL(`image/${options.fallbackImageType}`);
+    const data = canvas.toDataURL(
+      `image/${options.fallbackImageType === "jpg" ? "jpeg" : options.fallbackImageType}`,
+    );
     img.remove();
 
     const scale =
