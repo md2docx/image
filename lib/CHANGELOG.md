@@ -1,5 +1,11 @@
 # @m2d/image
 
+## 1.3.2
+
+### Patch Changes
+
+- 59b1107: Remove `bmp` and `gif` fallback formats. These formats are not well supported on canvas, causing issues with our Canvas-based fallback conversion.
+
 ## 1.3.1
 
 ### Patch Changes
@@ -11,7 +17,6 @@
 ### Minor Changes
 
 - c2945bc: Added support for optimized in-memory caching of resolved image data.
-
   - Introduced `cacheConfig.cache` option to share or inject a memory cache instance across multiple plugin invocations.
   - Consumers can now fine-tune cache behavior using `cacheConfig.parallel` (to avoid redundant parallel resolutions) and `cacheConfig.cacheMode` (choose between `"memory"`, `"idb"`, or `"both"`).
   - Enhances image resolution performance in multi-page or repeated image scenarios, especially when used across sessions or documents.
@@ -55,7 +60,6 @@
 
 - c0ccdda: Rewrite image resolver to handle svg as well - prelude for cutom caching
 - 3c2a0d7: Add IndexedDB image caching
-
   - Implement persistent image caching using IndexedDB
   - Add idb dependency for IndexedDB operations
   - Create cache get/set/clear operations
@@ -69,7 +73,6 @@
   - Added salt option for cache key differentiation
   - Improved documentation with JSDoc comments
 - a31621c: Make IndexedDB caching truly optional:
-
   - Only apply caching wrapper when idb option is enabled
   - Set default idb value to true for backward compatibility
 
