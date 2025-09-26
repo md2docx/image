@@ -1,5 +1,5 @@
-import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vitest/config";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,7 +11,11 @@ export default defineConfig({
     coverage: {
       include: ["src/**"],
       // No proper way to test DOM interactions with SVG yet
-      exclude: ["src/**/*.test.*", "src/**/svg-utils.ts", "src/**/declaration.d.ts"],
+      exclude: [
+        "src/**/*.test.*",
+        "src/**/svg-utils.ts",
+        "src/**/declaration.d.ts",
+      ],
       reporter: ["text", "json", "clover", "html"],
     },
   },

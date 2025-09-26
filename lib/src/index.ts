@@ -1,4 +1,4 @@
-import type { IImageOptions } from "docx";
+/** biome-ignore-all lint/style/noNonNullAssertion: done responsibly */
 import type {
   EmptyNode,
   Image,
@@ -11,9 +11,14 @@ import type {
   RootContent,
   SVG,
 } from "@m2d/core";
-import { createPersistentCache, simpleCleanup, type CacheConfigType } from "@m2d/core/cache";
+import {
+  type CacheConfigType,
+  createPersistentCache,
+  simpleCleanup,
+} from "@m2d/core/cache";
+import type { Definitions } from "@m2d/core/utils";
+import type { IImageOptions } from "docx";
 import { fixGeneratedSvg, handleSvg } from "./svg-utils";
-import { Definitions } from "@m2d/core/utils";
 import { getImageMimeType, getPlaceHolderImage } from "./utils";
 
 /**
@@ -88,13 +93,17 @@ export interface IDefaultImagePluginOptions {
    * @param metadata - Optional metadata such as diagram type or render info.
    * @returns Modified SVG string.
    */
+
+  // biome-ignore lint/suspicious/noExplicitAny: ok - coming from mermaid
   fixGeneratedSvg: (svg: string, metadata: any) => string;
 }
 
 /**
  * External plugin options accepted by consumers, omitting internal-only values.
  */
-export type IImagePluginOptions = Optional<Omit<IDefaultImagePluginOptions, "dpi">>;
+export type IImagePluginOptions = Optional<
+  Omit<IDefaultImagePluginOptions, "dpi">
+>;
 
 /**
  * Handles base64 data URL images. Returns image options suitable for DOCX.
@@ -109,13 +118,15 @@ const handleDataUrls = async (
 
   const img = new Image();
   img.src = src;
-  await new Promise(resolve => (img.onload = resolve));
+  await new Promise((resolve) => {
+    img.onload = resolve;
+  });
 
   const width = img.width * scaleFactor;
   const height = img.height * scaleFactor;
 
   // skipcq: JS-0323
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: ok
   if (SUPPORTED_IMAGE_TYPES.includes(imgType as any)) {
     return {
       data: src,
@@ -140,7 +151,9 @@ const handleDataUrls = async (
   const fallbackImageType = options.fallbackImageType ?? "png";
 
   return {
-    data: canvas.toDataURL(`image/${fallbackImageType === "jpg" ? "jpeg" : fallbackImageType}`),
+    data: canvas.toDataURL(
+      `image/${fallbackImageType === "jpg" ? "jpeg" : fallbackImageType}`,
+    ),
     type: fallbackImageType,
     transformation: {
       width: width / scaleFactor,
@@ -160,7 +173,10 @@ const handleNonDataUrls = async (
 ): Promise<IImageOptions> => {
   const response = await fetch(url);
 
-  if (/(svg|xml)/.test(response.headers.get("content-type") ?? "") || url.endsWith(".svg")) {
+  if (
+    /(svg|xml)/.test(response.headers.get("content-type") ?? "") ||
+    url.endsWith(".svg")
+  ) {
     const svgText = await response.text();
     return handleSvg({ type: "svg", value: svgText }, options);
   }
@@ -168,7 +184,9 @@ const handleNonDataUrls = async (
   const arrayBuffer = await response.arrayBuffer();
   const mimeType = getImageMimeType(arrayBuffer) || "png";
 
-  const imageBitmap = await createImageBitmap(new Blob([arrayBuffer], { type: mimeType }));
+  const imageBitmap = await createImageBitmap(
+    new Blob([arrayBuffer], { type: mimeType }),
+  );
 
   if (!SUPPORTED_IMAGE_TYPES.includes(mimeType)) {
     /* v8 ignore next 3 */
@@ -224,7 +242,10 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
     );
 
     // @ts-expect-error -- mutating transformation
-    imgOptions.transformation = { width: width * scale, height: height * scale };
+    imgOptions.transformation = {
+      width: width! * scale,
+      height: height! * scale,
+    };
     return imgOptions;
   } catch (error) {
     console.error(`Error resolving image: ${src}`, error);
@@ -256,7 +277,9 @@ const defaultOptions: IDefaultImagePluginOptions = {
  * Image plugin for `@m2d/core`.
  * Resolves all inline images (base64, SVG, URL) for DOCX generation.
  */
-export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ => {
+export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = (
+  options_,
+) => {
   const options = { ...defaultOptions, ...options_ };
 
   const cacheConfig = {
@@ -269,7 +292,11 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     ],
   } as CacheConfigType<IImageOptions>;
 
-  options.imageResolver = createPersistentCache(options.imageResolver, NAMESPACE, cacheConfig);
+  options.imageResolver = createPersistentCache(
+    options.imageResolver,
+    NAMESPACE,
+    cacheConfig,
+  );
 
   /** Preprocess step: resolves all image references in the MDAST. */
   const preprocess = async (root: Root, definitions: Definitions) => {
@@ -290,7 +317,11 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
               (src?.startsWith("data:") ? "" : (src?.split("/")?.pop() ?? ""));
 
             node.data = {
-              ...(await options.imageResolver(src, options, node as Image | SVG)),
+              ...(await options.imageResolver(
+                src,
+                options,
+                node as Image | SVG,
+              )),
               altText: { description: alt, name: alt, title: alt },
               ...(node as Image | SVG).data,
             };
@@ -320,7 +351,9 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
     /** clean up IndexedDB once the document is packed */
     postprocess: () => {
       if (
-        (options?.cacheConfig?.cacheMode ? options?.cacheConfig?.cacheMode !== "memory" : true) &&
+        (options?.cacheConfig?.cacheMode
+          ? options?.cacheConfig?.cacheMode !== "memory"
+          : true) &&
         !cleanupDone
       ) {
         cleanupDone = true;

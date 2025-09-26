@@ -1,10 +1,10 @@
 // svg-utils.ts
 
-import type { IImageOptions } from "docx";
-import { IDefaultImagePluginOptions } from ".";
-import { SVG } from "@m2d/core";
-import { getPlaceHolderImage } from "./utils";
+import type { SVG } from "@m2d/core";
 import { svgToBlob } from "@svg-fns/svg2img";
+import type { IImageOptions } from "docx";
+import type { IDefaultImagePluginOptions } from ".";
+import { getPlaceHolderImage } from "./utils";
 
 /**
  * Crops an SVG element tightly to its contents and adjusts dimensions.
@@ -20,7 +20,8 @@ const tightlyCropSvg = (
     container.appendChild(svgContainer);
     const svgEl = svgContainer.querySelector("svg");
 
-    if (!svgEl || svgEl.nodeType !== 1) return reject(new Error("No or invalid <svg> found"));
+    if (!svgEl || svgEl.nodeType !== 1)
+      return reject(new Error("No or invalid <svg> found"));
 
     requestAnimationFrame(() => {
       try {
@@ -45,7 +46,10 @@ const tightlyCropSvg = (
 
         const svg = new XMLSerializer().serializeToString(clonedSvg);
         svgContainer.remove();
-        resolve({ svg, scale: Math.min(croppedW / origW, croppedH / origH, 1) });
+        resolve({
+          svg,
+          scale: Math.min(croppedW / origW, croppedH / origH, 1),
+        });
       } catch (err) {
         svgContainer.remove();
         reject(err);
@@ -74,13 +78,21 @@ const getContainer = (options: IDefaultImagePluginOptions) => {
  * @param svg - Raw SVG string to transform.
  * @returns Modified SVG string.
  */
-export const fixGeneratedSvg = (svg: string, metadata: { diagramType: string }): string => {
+export const fixGeneratedSvg = (
+  svg: string,
+  metadata: { diagramType: string },
+): string => {
   return metadata.diagramType === "pie"
     ? svg
         .replace(".pieTitleText{text-anchor:middle;", ".pieTitleText{")
-        .replace(/<text[^>]*class="pieTitleText"[^>]*>(.*?)<\/text>/, (match, m1) => {
-          return match.replace(m1, m1.replace(/^"|"$/g, "")).replace(/ x=".*?"/, ' x="-20%"');
-        })
+        .replace(
+          /<text[^>]*class="pieTitleText"[^>]*>(.*?)<\/text>/,
+          (match, m1) => {
+            return match
+              .replace(m1, m1.replace(/^"|"$/g, ""))
+              .replace(/ x=".*?"/, ' x="-20%"');
+          },
+        )
     : svg;
 };
 
@@ -92,7 +104,7 @@ export const handleSvg = async (
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
   const value = svgNode.value;
-  let svg;
+  let svg: string;
   let isGantt = false;
   if (typeof value === "string") {
     svg = value;
@@ -105,27 +117,36 @@ export const handleSvg = async (
   }
   try {
     const croppedSvg =
-      isGantt || !svg ? { svg, scale: 1 } : await tightlyCropSvg(svg, getContainer(options));
+      isGantt || !svg
+        ? { svg, scale: 1 }
+        : await tightlyCropSvg(svg, getContainer(options));
 
     const { blob, width, height } = await svgToBlob(croppedSvg.svg, {
       format: options.fallbackImageType,
       scale: options.scale,
     });
 
-    if (!blob || !height || !width) throw new Error("Failed to convert SVG to data URL.");
+    if (!blob || !height || !width)
+      throw new Error("Failed to convert SVG to data URL.");
 
     // Increase Gantt chart resolution - can be enlarge more without getting blurred
     if (isGantt)
       options.scale = Math.max(
         options.scale,
         Math.floor(
-          Math.min((innerWidth * options.scale) / width, (innerHeight * options.scale) / height),
+          Math.min(
+            (innerWidth * options.scale) / width,
+            (innerHeight * options.scale) / height,
+          ),
         ),
       );
 
     const scale =
-      Math.min((options.maxW * options.dpi) / width, (options.maxH * options.dpi) / height, 1) *
-      croppedSvg.scale;
+      Math.min(
+        (options.maxW * options.dpi) / width,
+        (options.maxH * options.dpi) / height,
+        1,
+      ) * croppedSvg.scale;
     return {
       type: options.fallbackImageType,
       data: await blob.arrayBuffer(),

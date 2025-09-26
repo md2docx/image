@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: mocks */
+/** biome-ignore-all lint/complexity/noBannedTypes: mocks */
 import type {
   Parent,
   PhrasingContent,

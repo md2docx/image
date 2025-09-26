@@ -1,4 +1,3 @@
-import { rdiPlugin } from "esbuild-plugin-rdi";
 import react18Plugin from "esbuild-plugin-react18";
 import cssPlugin from "esbuild-plugin-react18-css";
 import { raw } from "esbuild-raw-plugin";

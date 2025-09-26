@@ -1,5 +1,5 @@
-import { IImageOptions } from "docx";
-import { IDefaultImagePluginOptions } from ".";
+import type { IImageOptions } from "docx";
+import type { IDefaultImagePluginOptions } from ".";
 
 /**
  * Determines the MIME type of an image buffer using file signature detection.
@@ -42,7 +42,9 @@ let shouldEmitEmptyPlaceholder = false;
  * @param options - Image plugin configuration.
  * @returns Image options for the placeholder.
  */
-export const getPlaceHolderImage = async (options: IDefaultImagePluginOptions) => {
+export const getPlaceHolderImage = async (
+  options: IDefaultImagePluginOptions,
+) => {
   if (!placeholderImg && options.placeholder && !shouldEmitEmptyPlaceholder) {
     shouldEmitEmptyPlaceholder = true;
     // skipcq: JS-0357

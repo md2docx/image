@@ -1,12 +1,12 @@
-import { describe, it, vi } from "vitest";
+import fs from "node:fs";
 import { toDocx } from "@m2d/core"; // Adjust path based on your setup
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkGfm from "remark-gfm";
-import fs from "fs";
-import { imagePlugin } from "../src";
 import { htmlPlugin } from "@m2d/html";
 import { mermaidPlugin } from "@m2d/mermaid";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
+import { describe, it, vi } from "vitest";
+import { imagePlugin } from "../src";
 import { getImageMimeType, getPlaceHolderImage } from "../src/utils";
 
 const markdown = fs.readFileSync("../sample.md", "utf-8");
@@ -32,7 +32,9 @@ describe.concurrent("toDocx", () => {
     expect(consoleSpy).not.toHaveBeenCalled();
   });
 
-  it("detects known image formats from Buffer and ArrayBuffer", ({ expect }) => {
+  it("detects known image formats from Buffer and ArrayBuffer", ({
+    expect,
+  }) => {
     const cases = [
       { bytes: [0x42, 0x4d, 0x00, 0x00], expected: "bmp" }, // BMP
       { bytes: [0x89, 0x50, 0x4e, 0x47], expected: "png" }, // PNG

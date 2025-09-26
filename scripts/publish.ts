@@ -84,3 +84,6 @@ try {
     // ignore
   }
 }
+
+// Publish canonical packages
+execSync("pnpm tsx scripts/publish-canonical.ts");
