@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@m2d/core": "^1.7.0",
+    "@svg-fns/io": "^1.0.0",
     "@svg-fns/svg2img": "^0.0.0"
   },
   "peerDependencies": {

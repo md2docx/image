@@ -187,6 +187,9 @@ importers:
       '@m2d/core':
         specifier: ^1.7.0
         version: 1.7.0(docx@9.5.1)
+      '@svg-fns/io':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@svg-fns/svg2img':
         specifier: ^0.0.0
         version: 0.0.0(sharp@0.34.4)
@@ -1319,6 +1322,14 @@ packages:
   '@sindresorhus/merge-streams@2.3.0':
     resolution: {integrity: sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==}
     engines: {node: '>=18'}
+
+  '@svg-fns/io@1.0.0':
+    resolution: {integrity: sha512-fDZTyIjbl327M9H8W6U1TJkaLlVNvSQ1SWLKjHTZlCWTywXQHJOIekpSHhCjlVc6ogU8uQ0E1/6UbPx60qv/NA==}
+    peerDependencies:
+      '@xmldom/xmldom': ^0.8.11
+    peerDependenciesMeta:
+      '@xmldom/xmldom':
+        optional: true
 
   '@svg-fns/svg2img@0.0.0':
     resolution: {integrity: sha512-9hj1BlZGabIhd8l93qge6rA+B0xb0+EDGWVA/1mHQ93Y+85aX4XQkuEptCqKogI0/BNW0Rzcedjw7idRknyy1w==}
@@ -4935,6 +4946,8 @@ snapshots:
   '@shikijs/vscode-textmate@10.0.2': {}
 
   '@sindresorhus/merge-streams@2.3.0': {}
+
+  '@svg-fns/io@1.0.0': {}
 
   '@svg-fns/svg2img@0.0.0(sharp@0.34.4)':
     optionalDependencies:
