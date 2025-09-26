@@ -1,5 +1,15 @@
 # @m2d/image
 
+## 1.4.1
+
+### Patch Changes
+
+- 1339680: ♻️ Use `@svg-fns/io`'s `parseSvg` to safely generate `<svg>` elements before attaching to the DOM.
+
+  - Prevents unsafe string injection
+  - Ensures valid, namespaced SVG elements
+  - Improves consistency across different environments
+
 ## 1.4.0
 
 ### Minor Changes
