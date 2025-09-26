@@ -285,7 +285,9 @@ export const imagePlugin: (options?: IImagePluginOptions) => IPlugin = options_ 
               (node as Image).url ??
               definitions[(node as ImageReference).identifier?.toUpperCase()];
 
-            const alt = (node as Image).alt ?? src?.split("/")?.pop() ?? "";
+            const alt =
+              (node as Image).alt ??
+              (src?.startsWith("data:") ? "" : (src?.split("/")?.pop() ?? ""));
 
             node.data = {
               ...(await options.imageResolver(src, options, node as Image | SVG)),
