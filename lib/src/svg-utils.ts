@@ -1,6 +1,5 @@
-// svg-utils.ts
-
 import type { SVG } from "@m2d/core";
+import { parseSvg } from "@svg-fns/io";
 import { svgToBlob } from "@svg-fns/svg2img";
 import type { IImageOptions } from "docx";
 import type { IDefaultImagePluginOptions } from ".";
@@ -14,11 +13,8 @@ const tightlyCropSvg = (
   container: HTMLDivElement,
 ): Promise<{ svg: string; scale: number }> =>
   new Promise((resolve, reject) => {
-    const svgContainer = document.createElement("div");
-    svgContainer.innerHTML = svgRaw;
-    svgContainer.style = "width:100%;height:100%;position:absolute;";
-    container.appendChild(svgContainer);
-    const svgEl = svgContainer.querySelector("svg");
+    const svgEl = parseSvg(svgRaw) as SVGSVGElement;
+    container.appendChild(svgEl);
 
     if (!svgEl || svgEl.nodeType !== 1)
       return reject(new Error("No or invalid <svg> found"));
@@ -45,30 +41,31 @@ const tightlyCropSvg = (
         clonedSvg.removeAttribute("style");
 
         const svg = new XMLSerializer().serializeToString(clonedSvg);
-        svgContainer.remove();
+        svgEl.remove();
         resolve({
           svg,
           scale: Math.min(croppedW / origW, croppedH / origH, 1),
         });
       } catch (err) {
-        svgContainer.remove();
+        svgEl.remove();
         reject(err);
       }
     });
   });
 
-let container: HTMLDivElement;
+let globalContainer: HTMLDivElement;
 /**
  * Ensures a singleton offscreen container used to render and measure SVG content.
  */
 const getContainer = (options: IDefaultImagePluginOptions) => {
-  if (!container) {
-    container = document.createElement("div");
-    container.style = `height:${options.maxH}in;width:${options.maxW}in;position:absolute;left:-2500vw;`;
-    document.body.appendChild(container);
-    options.dpi = parseFloat(getComputedStyle(container).width) / options.maxW;
+  if (!globalContainer) {
+    globalContainer = document.createElement("div");
+    globalContainer.style = `height:${options.maxH}in;width:${options.maxW}in;position:absolute;left:-2500vw;`;
+    document.body.appendChild(globalContainer);
+    options.dpi =
+      parseFloat(getComputedStyle(globalContainer).width) / options.maxW;
   }
-  return container;
+  return globalContainer;
 };
 
 /**
