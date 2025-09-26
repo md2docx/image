@@ -1,5 +1,26 @@
 # @m2d/image
 
+## 1.4.0
+
+### Minor Changes
+
+- 27a9793: ✨ Added `quality` option for image conversion.
+
+  - Defaults to **0.92**.
+  - Used only when conversion is required **and** the output format is lossy (e.g., JPEG).
+
+### Patch Changes
+
+- c57114b: Improve SVG → image conversion by preferring **OffscreenCanvas** over `<canvas>` when available.
+
+  - OffscreenCanvas advantages:
+
+    - Runs in worker contexts → avoids blocking the main thread during rasterization.
+    - Provides more consistent and reliable Blob generation compared to `HTMLCanvasElement.toBlob`.
+    - Better performance for large or complex SVGs.
+
+  - Fallback to `<canvas>` remains for browsers without OffscreenCanvas support (e.g., Safari).
+
 ## 1.3.2
 
 ### Patch Changes
@@ -60,6 +81,7 @@
 
 - c0ccdda: Rewrite image resolver to handle svg as well - prelude for cutom caching
 - 3c2a0d7: Add IndexedDB image caching
+
   - Implement persistent image caching using IndexedDB
   - Add idb dependency for IndexedDB operations
   - Create cache get/set/clear operations
