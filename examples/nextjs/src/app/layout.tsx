@@ -1,16 +1,20 @@
 import "./styles.css";
 import "react18-loaders/dist/index.css";
-import { Core } from "nextjs-darkmode-lite";
-import { Layout } from "@repo/shared/dist/server";
 import { Header } from "@repo/shared";
+import { Layout } from "@repo/shared/dist/server";
 import { Inter } from "next/font/google";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { Core } from "nextjs-darkmode-lite";
+import type { ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
 /** Root layout. */
-export default function RootLayout({ children }: { children: React.ReactNode }): ReactNode {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): ReactNode {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
