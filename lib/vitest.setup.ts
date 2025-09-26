@@ -1,4 +1,10 @@
-import { Root, RootContent, PhrasingContent, Parent, SVG } from "@m2d/core";
+import type {
+  Parent,
+  PhrasingContent,
+  Root,
+  RootContent,
+  SVG,
+} from "@m2d/core";
 import { vi } from "vitest";
 
 // Mock createImageBitmap
@@ -131,7 +137,8 @@ vi.mock("@m2d/mermaid", () => {
       // Create an extended MDAST-compatible SVG node
       const svgNode: SVG = {
         type: "svg",
-        value: '<svg xmlns="http://www.w3.org/2000/svg"><text>Mock</text></svg>',
+        value:
+          '<svg xmlns="http://www.w3.org/2000/svg"><text>Mock</text></svg>',
         // Store original Mermaid source in data for traceability/debug
         data: { mermaid: node.value },
       };
@@ -152,7 +159,23 @@ vi.mock("@m2d/mermaid", () => {
   };
 });
 
-vi.mock("@mermaid/core/dist/utils/cache", () => {
+vi.mock("@m2d/core/dist/utils/cache", () => {
+  return {
+    __esModule: true,
+    createPersistentCache: (mermaidProcessor: Function) => mermaidProcessor,
+    simpleCleanup: () => null,
+  };
+});
+
+vi.mock("@m2d/core/utils/cache", () => {
+  return {
+    __esModule: true,
+    createPersistentCache: (mermaidProcessor: Function) => mermaidProcessor,
+    simpleCleanup: () => null,
+  };
+});
+
+vi.mock("@m2d/core/cache", () => {
   return {
     __esModule: true,
     createPersistentCache: (mermaidProcessor: Function) => mermaidProcessor,
@@ -168,3 +191,10 @@ vi.mock("@mermaid/core/dist/utils/cache", () => {
     toDataURL: vi.fn(() => "data:image/png;base64,fakepng"),
   };
 });
+
+(HTMLCanvasElement.prototype as any).toBlob = vi.fn(
+  (callback: (blob: Blob) => void) => {
+    const blob = new Blob(["fakepng"], { type: "image/png" });
+    callback(blob);
+  },
+);
