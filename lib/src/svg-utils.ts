@@ -5,8 +5,39 @@ import type { IImageOptions } from "docx";
 import type { IDefaultImagePluginOptions } from ".";
 import { getPlaceHolderImage } from "./utils";
 
+let globalContainer: HTMLDivElement;
+
 /**
- * Crops an SVG element tightly to its contents and adjusts dimensions.
+ * Returns a hidden singleton container for measuring SVGs.
+ * Lazily created on first use and reused for performance.
+ */
+const getContainer = (options: IDefaultImagePluginOptions): HTMLDivElement => {
+  if (!globalContainer) {
+    globalContainer = document.createElement("div");
+    globalContainer.style.cssText = `
+      height:${options.maxH}in;
+      width:${options.maxW}in;
+      position:absolute;
+      visibility:hidden;
+      pointer-events:none;
+    `;
+    document.body.appendChild(globalContainer);
+
+    // Calculate DPI once, based on computed width
+    const width = parseFloat(getComputedStyle(globalContainer).width);
+    if (!Number.isNaN(width)) {
+      options.dpi = width / options.maxW;
+    }
+  }
+  return globalContainer;
+};
+
+/**
+ * Crops an SVG to tightly fit its contents by adjusting viewBox and dimensions.
+ *
+ * @param svgRaw - Raw SVG string
+ * @param container - Hidden container for DOM measurement
+ * @returns Serialized cropped SVG and a relative scale factor
  */
 const tightlyCropSvg = (
   svgRaw: string,
@@ -16,36 +47,35 @@ const tightlyCropSvg = (
     const svgEl = parseSvg(svgRaw) as SVGSVGElement;
     container.appendChild(svgEl);
 
-    if (!svgEl || svgEl.nodeType !== 1)
-      return reject(new Error("No or invalid <svg> found"));
-
     requestAnimationFrame(() => {
       try {
         const bbox = svgEl.getBBox();
-        const origW = parseFloat(getComputedStyle(svgEl).width) || 0;
-        const origH = parseFloat(getComputedStyle(svgEl).height) || 0;
+        const origW = parseFloat(getComputedStyle(svgEl).width) || bbox.width;
+        const origH = parseFloat(getComputedStyle(svgEl).height) || bbox.height;
 
         const margin = 4;
-        const x = bbox.x - margin;
-        const y = bbox.y - margin;
         const croppedW = bbox.width + margin * 2;
         const croppedH = bbox.height + margin * 2;
 
         const finalW = origW > 0 ? Math.min(croppedW, origW) : croppedW;
         const finalH = origH > 0 ? Math.min(croppedH, origH) : croppedH;
 
-        const clonedSvg = svgEl.cloneNode(true) as SVGSVGElement;
-        clonedSvg.setAttribute("viewBox", `${x} ${y} ${croppedW} ${croppedH}`);
-        clonedSvg.setAttribute("width", `${finalW}`);
-        clonedSvg.setAttribute("height", `${finalH}`);
-        clonedSvg.removeAttribute("style");
+        const clone = svgEl.cloneNode(true) as SVGSVGElement;
+        clone.setAttribute(
+          "viewBox",
+          `${bbox.x - margin} ${bbox.y - margin} ${croppedW} ${croppedH}`,
+        );
+        clone.setAttribute("width", `${finalW}`);
+        clone.setAttribute("height", `${finalH}`);
+        clone.removeAttribute("style");
 
-        const svg = new XMLSerializer().serializeToString(clonedSvg);
+        const serialized = new XMLSerializer().serializeToString(clone);
         svgEl.remove();
-        resolve({
-          svg,
-          scale: Math.min(croppedW / origW, croppedH / origH, 1),
-        });
+
+        const scale =
+          origW && origH ? Math.min(croppedW / origW, croppedH / origH, 1) : 1;
+
+        resolve({ svg: serialized, scale });
       } catch (err) {
         svgEl.remove();
         reject(err);
@@ -53,24 +83,9 @@ const tightlyCropSvg = (
     });
   });
 
-let globalContainer: HTMLDivElement;
 /**
- * Ensures a singleton offscreen container used to render and measure SVG content.
- */
-const getContainer = (options: IDefaultImagePluginOptions) => {
-  if (!globalContainer) {
-    globalContainer = document.createElement("div");
-    globalContainer.style = `height:${options.maxH}in;width:${options.maxW}in;position:absolute;left:-2500vw;`;
-    document.body.appendChild(globalContainer);
-    options.dpi =
-      parseFloat(getComputedStyle(globalContainer).width) / options.maxW;
-  }
-  return globalContainer;
-};
-
-/**
- * Applies generic fixes to known SVG rendering issues (e.g., Mermaid pie chart title alignment).
- * Designed to be overridden to handle tool-specific quirks in generated SVGs.
+ * Fixes known quirks in generated SVGs (e.g., Mermaid pie chart title alignment).
+ * Override or extend this function for tool-specific handling.
  *
  * @param svg - Raw SVG string to transform.
  * @returns Modified SVG string.
@@ -84,51 +99,58 @@ export const fixGeneratedSvg = (
         .replace(".pieTitleText{text-anchor:middle;", ".pieTitleText{")
         .replace(
           /<text[^>]*class="pieTitleText"[^>]*>(.*?)<\/text>/,
-          (match, m1) => {
-            return match
+          (match, m1) =>
+            match
               .replace(m1, m1.replace(/^"|"$/g, ""))
-              .replace(/ x=".*?"/, ' x="-20%"');
-          },
+              .replace(/ x=".*?"/, ' x="-20%"'),
         )
     : svg;
 };
 
 /**
- * Converts SVG into fallback raster image (PNG/JPG/etc.) for DOCX insertion.
+ * Converts an `SVG` node into a fallback raster image (PNG/JPEG/etc.)
+ * suitable for embedding in DOCX.
+ *
+ * @param svgNode - Extended MDAST `SVG` node
+ * @param options - Image plugin options
+ * @link {IDefaultImagePluginOptions}
+ * @returns Image options for docx.js consumption
  */
 export const handleSvg = async (
   svgNode: SVG,
   options: IDefaultImagePluginOptions,
 ): Promise<IImageOptions> => {
-  const value = svgNode.value;
-  let svg: string;
-  let isGantt = false;
-  if (typeof value === "string") {
-    svg = value;
-  } else {
-    const renderedData = await value;
-    if (!renderedData) return getPlaceHolderImage(options);
-    svg = renderedData.svg;
-    isGantt = renderedData.diagramType === "gantt";
-    svg = options.fixGeneratedSvg(svg, renderedData);
-  }
   try {
-    const croppedSvg =
+    const value = svgNode.value;
+    let svg: string;
+    let isGantt = false;
+
+    if (typeof value === "string") {
+      svg = value;
+    } else {
+      const rendered = await value;
+      if (!rendered) return getPlaceHolderImage(options);
+      svg = options.fixGeneratedSvg(rendered.svg, rendered);
+      isGantt = rendered.diagramType === "gantt";
+    }
+
+    const cropped =
       isGantt || !svg
         ? { svg, scale: 1 }
         : await tightlyCropSvg(svg, getContainer(options));
 
-    const { blob, width, height } = await svgToBlob(croppedSvg.svg, {
+    const { blob, width, height } = await svgToBlob(cropped.svg, {
       format: options.fallbackImageType,
       scale: options.scale,
       quality: options.quality,
     });
 
-    if (!blob || !height || !width)
-      throw new Error("Failed to convert SVG to data URL.");
+    if (!blob || !width || !height) {
+      throw new Error("Failed to convert SVG to raster");
+    }
 
-    // Increase Gantt chart resolution - can be enlarge more without getting blurred
-    if (isGantt)
+    // Special case: Gantt charts can be upscaled safely
+    if (isGantt) {
       options.scale = Math.max(
         options.scale,
         Math.floor(
@@ -138,13 +160,15 @@ export const handleSvg = async (
           ),
         ),
       );
+    }
 
     const scale =
       Math.min(
         (options.maxW * options.dpi) / width,
         (options.maxH * options.dpi) / height,
         1,
-      ) * croppedSvg.scale;
+      ) * cropped.scale;
+
     return {
       type: options.fallbackImageType,
       data: await blob.arrayBuffer(),
@@ -153,9 +177,8 @@ export const handleSvg = async (
         height: height * scale,
       },
     };
-  } catch (error) {
-    console.error("Error resolving SVG image: ", error);
+  } catch (err) {
+    console.error("Error handling SVG:", err);
     return getPlaceHolderImage(options);
   }
-  /* v8 ignore stop */
 };
