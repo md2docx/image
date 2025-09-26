@@ -4,21 +4,7 @@ import type { IImageOptions } from "docx";
 import { IDefaultImagePluginOptions } from ".";
 import { SVG } from "@m2d/core";
 import { getPlaceHolderImage } from "./utils";
-
-/**
- * Converts a raw SVG string into a base64-encoded data URL.
- */
-const svgToBase64 = (svg: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const blob = new Blob([svg], { type: "image/svg+xml" });
-    const reader = new FileReader();
-
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-
-    reader.readAsDataURL(blob);
-  });
-};
+import { svgToBlob } from "@svg-fns/svg2img";
 
 /**
  * Crops an SVG element tightly to its contents and adjusts dimensions.
@@ -118,47 +104,31 @@ export const handleSvg = async (
     svg = options.fixGeneratedSvg(svg, renderedData);
   }
   try {
-    const img = new Image();
-    const container = getContainer(options);
-    container.appendChild(img);
-    const croppedSvg = isGantt || !svg ? { svg, scale: 1 } : await tightlyCropSvg(svg, container);
+    const croppedSvg =
+      isGantt || !svg ? { svg, scale: 1 } : await tightlyCropSvg(svg, getContainer(options));
 
-    const svgDataURL = await svgToBase64(croppedSvg.svg);
-    img.src = svgDataURL;
+    const { blob, width, height } = await svgToBlob(croppedSvg.svg, {
+      format: options.fallbackImageType,
+      scale: options.scale,
+    });
 
-    await new Promise(resolve => (img.onload = resolve));
+    if (!blob || !height || !width) throw new Error("Failed to convert SVG to data URL.");
 
     // Increase Gantt chart resolution - can be enlarge more without getting blurred
     if (isGantt)
       options.scale = Math.max(
         options.scale,
-        Math.floor(Math.min(innerWidth / img.width, innerHeight / img.height)),
+        Math.floor(
+          Math.min((innerWidth * options.scale) / width, (innerHeight * options.scale) / height),
+        ),
       );
-
-    const width = img.width * options.scale;
-    const height = img.height * options.scale;
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    /* v8 ignore start */
-    if (!ctx) throw new Error("Canvas context not available");
-
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(img, 0, 0, width, height);
-
-    const data = canvas.toDataURL(
-      `image/${options.fallbackImageType === "jpg" ? "jpeg" : options.fallbackImageType}`,
-    );
-    img.remove();
 
     const scale =
       Math.min((options.maxW * options.dpi) / width, (options.maxH * options.dpi) / height, 1) *
       croppedSvg.scale;
     return {
       type: options.fallbackImageType,
-      data,
+      data: await blob.arrayBuffer(),
       transformation: {
         width: width * scale,
         height: height * scale,

@@ -170,6 +170,9 @@ importers:
       '@m2d/core':
         specifier: ^1.7.0
         version: 1.7.0(docx@9.5.1)
+      '@svg-fns/svg2img':
+        specifier: ^0.0.0
+        version: 0.0.0(sharp@0.34.4)
     devDependencies:
       '@m2d/html':
         specifier: ^1.1.10
@@ -1307,6 +1310,14 @@ packages:
     resolution: {integrity: sha512-ARz+Bs8kY6FtitYM96PqPEVvPXqEZmPZsSkXvyX19YzDqkCaIlhCieLLMI5hxO9SRZ2XtCtm8wxhy0iJ2jxNfw==}
     cpu: [x64]
     os: [win32]
+
+  '@svg-fns/svg2img@0.0.0':
+    resolution: {integrity: sha512-9hj1BlZGabIhd8l93qge6rA+B0xb0+EDGWVA/1mHQ93Y+85aX4XQkuEptCqKogI0/BNW0Rzcedjw7idRknyy1w==}
+    peerDependencies:
+      sharp: ^0.34.4
+    peerDependenciesMeta:
+      sharp:
+        optional: true
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -5098,6 +5109,10 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.52.2':
     optional: true
+
+  '@svg-fns/svg2img@0.0.0(sharp@0.34.4)':
+    optionalDependencies:
+      sharp: 0.34.4
 
   '@swc/helpers@0.5.15':
     dependencies:

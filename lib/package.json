@@ -52,7 +52,8 @@
     "xxhash-wasm": "^1.1.0"
   },
   "dependencies": {
-    "@m2d/core": "^1.7.0"
+    "@m2d/core": "^1.7.0",
+    "@svg-fns/svg2img": "^0.0.0"
   },
   "peerDependencies": {
     "docx": "^9.3.0"
