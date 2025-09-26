@@ -14,12 +14,9 @@
     "clean": "rm -rf dist",
     "dev": "tsup --watch && tsc -p tsconfig-build.json -w",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
     "test": "vitest run --coverage"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/scripts": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@testing-library/react": "^16.3.0",
@@ -57,6 +54,8 @@
     "remark-parse": "^11.0.0",
     "typingfx": "^1.2.0",
     "unified": "^11.0.5",
-    "unist-util-remove-position": "^5.0.0"
+    "unist-util-remove-position": "^5.0.0",
+    "@m2d/react-markdown": "^1.0.0",
+    "rehype-raw": "^7.0.0"
   }
 }

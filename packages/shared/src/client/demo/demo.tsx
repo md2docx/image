@@ -1,18 +1,18 @@
 "use client";
 
-import { unified } from "unified";
-import md from "../../../../../sample.md?raw";
+import { toDocx } from "@m2d/core";
+import { htmlPlugin } from "@m2d/html";
+import { imagePlugin } from "@m2d/image";
+import { mermaidPlugin } from "@m2d/mermaid";
+import { useState } from "react";
 import remarkParse from "remark-parse";
-import styles from "./demo.module.scss";
-import { CodeDisplay } from "./code-display";
+import { unified } from "unified";
 import { removePosition } from "unist-util-remove-position";
+import md from "../../../../../sample.md?raw";
+import { CodeDisplay } from "./code-display";
+import styles from "./demo.module.scss";
 // skipcq: JS-R1001
 import demoCode from "./demo.tsx?raw";
-import { useState } from "react";
-import { toDocx } from "@m2d/core";
-import { imagePlugin } from "@m2d/image";
-import { htmlPlugin } from "@m2d/html";
-import { mermaidPlugin } from "@m2d/mermaid";
 
 /** React live demo */
 export function Demo() {
@@ -31,9 +31,13 @@ export function Demo() {
       mdast,
       {},
       {
-        plugins: [htmlPlugin(), mermaidPlugin(), imagePlugin({ placeholder: "/placeholder.png" })],
+        plugins: [
+          htmlPlugin(),
+          mermaidPlugin(),
+          imagePlugin({ placeholder: "/placeholder.png" }),
+        ],
       },
-    ).then(blob => {
+    ).then((blob) => {
       const url = URL.createObjectURL(blob as Blob);
       const link = document.createElement("a");
       link.href = url;
@@ -54,7 +58,12 @@ export function Demo() {
   return (
     <div className={styles.demo}>
       <h1>MDAST (Markdown Abstract Syntax Tree) to DOCX</h1>
-      <button className={styles.btn} disabled={loading} onClick={downloadDocx}>
+      <button
+        className={styles.btn}
+        disabled={loading}
+        onClick={downloadDocx}
+        type="button"
+      >
         {loading ? "Downloading..." : "Download as DOCX"}
       </button>
       <CodeDisplay code={code} />
