@@ -54,6 +54,9 @@ export interface IDefaultImagePluginOptions {
   /** Fallback format to convert unsupported image types. @default "png" */
   fallbackImageType: "png" | "jpg";
 
+  /** Quality factor (0–1). Applies only to lossy formats (`jpeg`/`webp`/`avif`). Default: `0.92`. */
+  quality: number;
+
   /** Image resolution function used to convert URL/base64/SVG to image options */
   imageResolver: ImageResolver;
 
@@ -260,6 +263,7 @@ const defaultImageResolver: ImageResolver = async (src, options, node) => {
 const defaultOptions: IDefaultImagePluginOptions = {
   scale: 3,
   fallbackImageType: "png",
+  quality: 0.92,
   imageResolver: defaultImageResolver,
   maxW: 6.3,
   maxH: 9.7,

@@ -12,6 +12,7 @@ import { getImageMimeType, getPlaceHolderImage } from "../src/utils";
 const markdown = fs.readFileSync("../sample.md", "utf-8");
 
 const toArrayBuffer = (buf: Buffer): ArrayBuffer =>
+  // @ts-expect-error -- ok
   buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 
 describe.concurrent("toDocx", () => {

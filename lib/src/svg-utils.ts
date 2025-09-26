@@ -124,6 +124,7 @@ export const handleSvg = async (
     const { blob, width, height } = await svgToBlob(croppedSvg.svg, {
       format: options.fallbackImageType,
       scale: options.scale,
+      quality: options.quality,
     });
 
     if (!blob || !height || !width)
