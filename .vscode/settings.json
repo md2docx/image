@@ -17,5 +17,6 @@
   "cSpell.words": ["mdast", "Turborepo"],
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "svg.preview.background": "dark-transparent"
 }

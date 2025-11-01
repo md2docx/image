@@ -17,7 +17,7 @@
     "sync": "turborepo-template-upgrade"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.4",
+    "@biomejs/biome": "2.2.5",
     "@changesets/cli": "^2.29.7",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.9.2",
@@ -26,8 +26,8 @@
     "plop": "^4.0.4",
     "tsx": "^4.20.6",
     "turbo": "^2.6.0",
-    "turborepo-template-upgrade": "^0.6.2",
     "typedoc": "^0.28.14",
+    "turborepo-template-upgrade": "^0.8.0",
     "typedoc-plugin-markdown": "^4.9.0",
     "typedoc-plugin-mdn-links": "^5.0.10",
     "typedoc-plugin-missing-exports": "^4.1.2",
