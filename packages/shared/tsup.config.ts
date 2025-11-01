@@ -1,3 +1,4 @@
+import { rdiPlugin } from "esbuild-plugin-rdi";
 import react18Plugin from "esbuild-plugin-react18";
 import cssPlugin from "esbuild-plugin-react18-css";
 import { raw } from "esbuild-raw-plugin";
@@ -17,7 +18,7 @@ export default defineConfig(
         raw({ textExtensions: ["md"] }),
         react18Plugin(),
         cssPlugin({ generateScopedName: "[folder]__[local]" }),
-        // rdiPlugin(), <-- todo: rdiPlugin sometimes breaks the build when building all packages parallel
+        rdiPlugin(),
       ],
       external: ["react"],
       ...options,
